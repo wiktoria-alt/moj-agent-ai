@@ -184,15 +184,33 @@ export default function ChatHome() {
 
   function reportPersistenceError(persistenceFailure: unknown) {
     console.error("Supabase persistence error", persistenceFailure);
+    const details =
+      persistenceFailure instanceof Error
+        ? persistenceFailure.message
+        : typeof persistenceFailure === "object" &&
+            persistenceFailure !== null &&
+            "message" in persistenceFailure &&
+            typeof persistenceFailure.message === "string"
+          ? persistenceFailure.message
+          : "";
     setPersistenceError(
-      "Nie udało się zsynchronizować rozmowy z Supabase. Spróbuj ponownie.",
+      `Nie udało się zsynchronizować rozmowy z Supabase.${details ? ` ${details}` : " Spróbuj ponownie."}`,
     );
   }
 
   function reportProfileError(profileFailure: unknown) {
     console.error("Supabase profile error", profileFailure);
+    const details =
+      profileFailure instanceof Error
+        ? profileFailure.message
+        : typeof profileFailure === "object" &&
+            profileFailure !== null &&
+            "message" in profileFailure &&
+            typeof profileFailure.message === "string"
+          ? profileFailure.message
+          : "";
     setProfileError(
-      "Nie udało się zsynchronizować profilu użytkownika z Supabase.",
+      `Nie udało się zsynchronizować profilu użytkownika z Supabase.${details ? ` ${details}` : ""}`,
     );
   }
 
