@@ -8,6 +8,11 @@ alter table public.conversations alter column user_id set not null;
 alter table public.documents alter column user_id set not null;
 alter table public.user_profiles drop constraint if exists user_profiles_pkey;
 alter table public.user_profiles alter column id drop default;
+
+-- Usuwamy stare profile, których nie da się połączyć z kontem Auth.
+delete from public.user_profiles
+where id not in (select id from auth.users);
+
 alter table public.user_profiles add primary key (id);
 alter table public.user_profiles add constraint user_profiles_id_fkey foreign key (id) references auth.users(id) on delete cascade;
 alter table public.conversations enable row level security;
