@@ -36,7 +36,7 @@ type ChatMode = (typeof modes)[number]["id"];
 type UserPreferences = Record<string, string>;
 type UserProfile = {
   id: string;
-  name: string | null;
+  displayName: string | null;
   preferences: UserPreferences;
 };
 
@@ -178,8 +178,8 @@ export default function ChatHome() {
 
   const profileGreeting = isProfileLoading
     ? ""
-    : userProfile?.name
-      ? `Cześć, ${userProfile.name}! Miło Cię znowu widzieć!`
+    : userProfile?.displayName
+      ? `Cześć, ${userProfile.displayName}! Miło Cię znowu widzieć!`
       : "Cześć! Nie znamy się jeszcze. Jak masz na imię?";
 
   function reportPersistenceError(persistenceFailure: unknown) {
@@ -217,7 +217,7 @@ export default function ChatHome() {
   async function refreshUserProfile(userId: string) {
     const { data, error: profileSelectError } = await supabase
       .from("user_profiles")
-      .select("id, name, preferences")
+        .select("id, display_name, preferences")
       .eq("id", userId)
       .maybeSingle();
 
@@ -228,7 +228,7 @@ export default function ChatHome() {
     if (!data) {
       const { error: profileCreateError } = await supabase
         .from("user_profiles")
-        .insert({ id: userId, name: null, preferences: {} });
+        .insert({ id: userId, display_name: null, preferences: {} });
 
       if (profileCreateError) {
         throw profileCreateError;
@@ -236,7 +236,7 @@ export default function ChatHome() {
 
       const newProfile: UserProfile = {
         id: userId,
-        name: null,
+        displayName: null,
         preferences: {},
       };
       setUserProfile(newProfile);
@@ -246,7 +246,10 @@ export default function ChatHome() {
 
     const profile: UserProfile = {
       id: data.id,
-      name: typeof data.name === "string" && data.name.trim() ? data.name : null,
+      displayName:
+        typeof data.display_name === "string" && data.display_name.trim()
+          ? data.display_name
+          : null,
       preferences:
         data.preferences &&
         typeof data.preferences === "object" &&
@@ -528,6 +531,7 @@ export default function ChatHome() {
       },
     );
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       await sendMessage(
         { text },
         {
@@ -537,6 +541,7 @@ export default function ChatHome() {
             model: selectedModel,
             userId: userIdRef.current,
           },
+          headers: session ? { Authorization: `Bearer ${session.access_token}` } : undefined,
         },
       );
       clearAttachedImage();

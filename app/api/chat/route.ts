@@ -1,5 +1,6 @@
 import { google } from "@ai-sdk/google";
 import { GoogleGenAI, Modality } from "@google/genai";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   convertToModelMessages,
   generateText,
@@ -100,7 +101,7 @@ type ChatRequestBody = {
 };
 
 type StoredUserProfile = {
-  name: string | null;
+  displayName: string | null;
   preferences: Record<string, string>;
 };
 
@@ -488,7 +489,7 @@ const webTools = {
   }),
 };
 
-function createPersonalizationTools(userId: string | null) {
+function createPersonalizationTools(userId: string, profileSupabase: SupabaseClient) {
   return {
     saveUserName: tool<
       SaveUserNameInput,
@@ -518,8 +519,8 @@ function createPersonalizationTools(userId: string | null) {
           };
         }
 
-        const { error } = await supabase.from("user_profiles").upsert(
-          { id: userId, name: normalizedName },
+        const { error } = await profileSupabase.from("user_profiles").upsert(
+          { id: userId, display_name: normalizedName },
           { onConflict: "id" },
         );
 
@@ -566,12 +567,12 @@ function createPersonalizationTools(userId: string | null) {
           };
         }
 
-        const currentProfile = await getStoredUserProfile(userId);
+        const currentProfile = await getStoredUserProfile(userId, profileSupabase);
         const preferences = {
           ...currentProfile.preferences,
           [normalizedKey]: normalizedValue,
         };
-        const { error } = await supabase.from("user_profiles").upsert(
+        const { error } = await profileSupabase.from("user_profiles").upsert(
           { id: userId, preferences },
           { onConflict: "id" },
         );
@@ -713,19 +714,6 @@ function getMode(value: unknown): ChatMode {
   return "casual";
 }
 
-function getUserId(value: unknown) {
-  if (
-    typeof value === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      value,
-    )
-  ) {
-    return value;
-  }
-
-  return null;
-}
-
 function getNameFromIntroduction(text: string): string | null {
   const trimmedText = text.trim();
   const introductionMatch = trimmedText.match(
@@ -745,9 +733,13 @@ function getNameFromIntroduction(text: string): string | null {
   return name ? name.trim().replace(/\s+/g, " ").slice(0, 80) : null;
 }
 
-async function saveDetectedUserName(userId: string, name: string) {
-  const { error } = await supabase.from("user_profiles").upsert(
-    { id: userId, name },
+async function saveDetectedUserName(
+  userId: string,
+  name: string,
+  profileSupabase: SupabaseClient,
+) {
+  const { error } = await profileSupabase.from("user_profiles").upsert(
+    { id: userId, display_name: name },
     { onConflict: "id" },
   );
 
@@ -757,24 +749,24 @@ async function saveDetectedUserName(userId: string, name: string) {
 }
 
 async function getStoredUserProfile(
-  userId: string | null,
+  userId: string,
+  profileSupabase: SupabaseClient,
 ): Promise<StoredUserProfile> {
-  if (!userId) {
-    return { name: null, preferences: {} };
-  }
-
-  const { data, error } = await supabase
+  const { data, error } = await profileSupabase
     .from("user_profiles")
-    .select("name, preferences")
+    .select("display_name, preferences")
     .eq("id", userId)
     .maybeSingle();
 
   if (error || !data) {
-    return { name: null, preferences: {} };
+    return { displayName: null, preferences: {} };
   }
 
   return {
-    name: typeof data.name === "string" && data.name.trim() ? data.name : null,
+    displayName:
+      typeof data.display_name === "string" && data.display_name.trim()
+        ? data.display_name
+        : null,
     preferences:
       data.preferences &&
       typeof data.preferences === "object" &&
@@ -791,9 +783,10 @@ function createPersonalizationPrompt(profile: StoredUserProfile) {
       ? preferenceEntries.map(([key, value]) => `${key}: ${value}`).join(", ")
       : "brak zapisanych preferencji";
 
-  if (profile.name) {
+  if (profile.displayName) {
     return `## PERSONALIZACJA UŻYTKOWNIKA
-Użytkownik ma na imię ${profile.name}.
+Rozmawiasz z użytkownikiem: ${profile.displayName}.
+Użytkownik ma na imię ${profile.displayName}.
 Zwracaj się do niego po imieniu i bądź ciepły oraz personalny — to Twój stały użytkownik.
 Nie pytaj ponownie o jego imię ani nie zaczynaj każdej odpowiedzi od powitania.
 Zapisane preferencje: ${preferenceText}.
@@ -802,7 +795,8 @@ Gdy użytkownik poda nową trwałą preferencję, użyj narzędzia saveUserPrefe
   }
 
   return `## PERSONALIZACJA UŻYTKOWNIKA
-To nowy użytkownik. Gdy zadaje pytanie merytoryczne, odpowiedz na nie bez powtarzania powitania; o imię zapytaj najwyżej raz, na końcu odpowiedzi.
+Rozmawiasz z użytkownikiem: nieznany.
+To nowy użytkownik. Przy pierwszej rozmowie zapytaj grzecznie o imię.
 Gdy poda imię, obowiązkowo użyj narzędzia saveUserName, żeby je zapamiętać.
 Gdy poda trwałą preferencję, użyj narzędzia saveUserPreference.
 Nie twierdź, że zapisałeś dane, dopóki odpowiednie narzędzie nie zwróci powodzenia.`;
@@ -1107,12 +1101,29 @@ function handleCommand(text: string) {
 }
 
 export async function POST(req: Request) {
-  const { image, messages, mode, model, userId: rawUserId }: ChatRequestBody =
+  const { image, messages, mode, model }: ChatRequestBody =
     await req.json();
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!token || !supabaseUrl || !supabaseAnonKey) {
+    return Response.json({ error: "Wymagane jest zalogowanie." }, { status: 401 });
+  }
+
+  const authClient = createClient(supabaseUrl, supabaseAnonKey);
+  const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !user) {
+    return Response.json({ error: "Sesja logowania wygasła." }, { status: 401 });
+  }
+
+  const userId = user.id;
+  const profileSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const parsedImage = parseImageDataUrl(image);
   const selectedMode = getMode(mode);
   const selectedModel = getAiModel(model);
-  const userId = getUserId(rawUserId);
   const recentMessages = messages.slice(
     selectedMode === "agent" ? -8 : -MAX_MESSAGES_TO_SEND,
   );
@@ -1151,13 +1162,13 @@ export async function POST(req: Request) {
     ? getNameFromIntroduction(lastUserText)
     : null;
 
-  if (userId && detectedUserName) {
-    await saveDetectedUserName(userId, detectedUserName);
+  if (detectedUserName) {
+    await saveDetectedUserName(userId, detectedUserName, profileSupabase);
   }
 
-  const storedUserProfile = await getStoredUserProfile(userId);
+  const storedUserProfile = await getStoredUserProfile(userId, profileSupabase);
   const personalizationPrompt = createPersonalizationPrompt(storedUserProfile);
-  const personalizationTools = createPersonalizationTools(userId);
+  const personalizationTools = createPersonalizationTools(userId, profileSupabase);
   const modeWebInstructions = shouldUseWebTools
     ? webInstructions
     : "W tym trybie nie uzywaj internetu. Jesli uzytkownik prosi o najnowsze informacje, odpowiedz ostroznie i zaproponuj tryb Szukaj albo Agent do weryfikacji aktualnych zrodel.";
