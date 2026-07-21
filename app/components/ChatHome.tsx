@@ -385,6 +385,12 @@ export default function ChatHome() {
 
     async function loadLatestConversation() {
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error("Brak zalogowanego użytkownika.");
+        }
+        const userId = user.id;
+        userIdRef.current = userId;
         const requestedConversationId = new URLSearchParams(
           window.location.search,
         ).get("conversation");
@@ -398,12 +404,12 @@ export default function ChatHome() {
               .from("conversations")
               .select("id")
               .eq("id", requestedConversationId)
-              .eq("user_id", userIdRef.current)
+              .eq("user_id", userId)
               .maybeSingle()
           : supabase
             .from("conversations")
             .select("id")
-            .eq("user_id", userIdRef.current)
+            .eq("user_id", userId)
             .order("updated_at", { ascending: false })
             .limit(1)
             .maybeSingle();
