@@ -3147,6 +3147,21 @@ h2 {
   gap: 8px;
 }
 
+.logout-button {
+  min-height: 38px;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 8px;
+  background: #fff;
+  color: #b91c1c;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: #fef2f2;
+}
+
 .top-nav a.nav-brand {
   width: 100%;
   min-height: 54px;
@@ -3635,7 +3650,13 @@ h2 {
   }
 
   .top-nav-links {
+    flex: 1;
     flex-direction: column;
+  }
+
+  .logout-button {
+    width: 100%;
+    margin-top: auto;
   }
 
   .top-nav a {

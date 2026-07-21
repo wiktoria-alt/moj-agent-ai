@@ -90,7 +90,13 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
             </a>
           );
         })}
-        <button type="button" onClick={() => void supabase.auth.signOut().then(() => { window.location.href = "/login"; })}>Wyloguj</button>
+        <button
+          className="logout-button"
+          onClick={() => void supabase.auth.signOut().then(() => { window.location.href = "/login"; })}
+          type="button"
+        >
+          Wyloguj
+        </button>
       </div>
     </nav>
   );
