@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type NavLink = {
   href: string;
@@ -89,6 +90,7 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
             </a>
           );
         })}
+        <button type="button" onClick={() => void supabase.auth.signOut().then(() => { window.location.href = "/login"; })}>Wyloguj</button>
       </div>
     </nav>
   );

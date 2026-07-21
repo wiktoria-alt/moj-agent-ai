@@ -1,0 +1,22 @@
+-- Lekcja 07: użytkownicy Supabase Auth i izolacja danych.
+alter table public.conversations add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.documents add column if not exists user_id uuid references auth.users(id) on delete cascade;
+delete from public.messages where conversation_id in (select id from public.conversations where user_id is null);
+delete from public.conversations where user_id is null;
+delete from public.documents where user_id is null;
+alter table public.conversations alter column user_id set not null;
+alter table public.documents alter column user_id set not null;
+alter table public.user_profiles drop constraint if exists user_profiles_pkey;
+alter table public.user_profiles alter column id drop default;
+alter table public.user_profiles add primary key (id);
+alter table public.user_profiles add constraint user_profiles_id_fkey foreign key (id) references auth.users(id) on delete cascade;
+alter table public.conversations enable row level security;
+alter table public.documents enable row level security;
+alter table public.messages enable row level security;
+alter table public.user_profiles enable row level security;
+create policy "own conversations" on public.conversations for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own documents" on public.documents for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "own messages" on public.messages for all using (exists (select 1 from public.conversations c where c.id = conversation_id and c.user_id = auth.uid())) with check (exists (select 1 from public.conversations c where c.id = conversation_id and c.user_id = auth.uid()));
+create policy "own profile" on public.user_profiles for all using (id = auth.uid()) with check (id = auth.uid());
+create index if not exists conversations_user_id_updated_at_idx on public.conversations(user_id, updated_at desc);
+create index if not exists documents_user_id_idx on public.documents(user_id);

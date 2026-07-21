@@ -49,10 +49,13 @@ export default function HistoryDetailsPage() {
       setError("");
 
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Brak zalogowanego użytkownika.");
         const { data: conversationRow, error: conversationError } = await supabase
           .from("conversations")
           .select("id, title, updated_at")
           .eq("id", conversationId)
+          .eq("user_id", user.id)
           .maybeSingle();
 
         if (conversationError) {

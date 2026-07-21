@@ -40,7 +40,6 @@ type UserProfile = {
   preferences: UserPreferences;
 };
 
-const USER_ID_STORAGE_KEY = "user_id";
 
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {
   return message.parts
@@ -246,7 +245,7 @@ export default function ChatHome() {
     const { error: createError } = await supabase
       .from("conversations")
       .upsert(
-        { id: conversationId, title: title ?? null },
+        { id: conversationId, title: title ?? null, user_id: userIdRef.current },
         { ignoreDuplicates: true, onConflict: "id" },
       );
 
@@ -341,12 +340,9 @@ export default function ChatHome() {
     profileLoadStartedRef.current = true;
 
     async function initializeUserProfile() {
-      let userId = window.localStorage.getItem(USER_ID_STORAGE_KEY);
-
-      if (!userId) {
-        userId = crypto.randomUUID();
-        window.localStorage.setItem(USER_ID_STORAGE_KEY, userId);
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      if (!userId) throw new Error("Brak zalogowanego użytkownika.");
 
       userIdRef.current = userId;
 
@@ -384,10 +380,12 @@ export default function ChatHome() {
               .from("conversations")
               .select("id")
               .eq("id", requestedConversationId)
+              .eq("user_id", userIdRef.current)
               .maybeSingle()
           : supabase
             .from("conversations")
             .select("id")
+            .eq("user_id", userIdRef.current)
             .order("updated_at", { ascending: false })
             .limit(1)
             .maybeSingle();

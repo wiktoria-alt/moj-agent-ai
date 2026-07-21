@@ -86,9 +86,12 @@ export default function HistoryPage() {
     setError("");
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Brak zalogowanego użytkownika.");
       const { data: conversationRows, error: conversationsError } = await supabase
         .from("conversations")
         .select("id, title, updated_at")
+        .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
 
       if (conversationsError) {
