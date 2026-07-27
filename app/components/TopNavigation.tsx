@@ -29,6 +29,7 @@ const links: NavLink[] = [
   { href: "/email-triage", label: "📧 E-mail Triage" },
   { href: "/report", label: "📊 Raporty" },
   { href: "/competitor", label: "🏢 Konkurencja" },
+  { href: "/meal-planner", label: "🍽️ Posiłki" },
 ];
 
 type TopNavigationProps = {
