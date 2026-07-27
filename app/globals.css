@@ -4647,3 +4647,327 @@ h2 {
     max-width: 92%;
   }
 }
+
+/* W1 lekcja 08: email triage */
+.email-triage-shell {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 82% 10%, rgba(248, 113, 113, 0.14), transparent 30rem),
+    radial-gradient(circle at 12% 18%, rgba(14, 165, 233, 0.13), transparent 28rem),
+    #f8fafc;
+}
+
+.email-triage-panel {
+  width: min(100%, 1180px);
+  align-self: center;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.email-triage-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  padding: 24px;
+}
+
+.email-triage-status {
+  min-width: 138px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 10px;
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+  padding: 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.email-triage-status span {
+  font-size: 1.7rem;
+  font-weight: 950;
+}
+
+.email-triage-grid {
+  display: grid;
+  grid-template-columns: minmax(310px, 0.82fr) minmax(0, 1.18fr);
+  gap: 0;
+  background: var(--surface-muted);
+}
+
+.email-triage-form,
+.email-triage-results {
+  min-width: 0;
+  padding: 20px;
+}
+
+.email-triage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-right: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.email-triage-form label {
+  color: var(--muted-strong);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.email-triage-form textarea {
+  width: 100%;
+  min-height: 360px;
+  resize: vertical;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  outline: none;
+  background: #ffffff;
+  color: var(--text);
+  padding: 14px;
+  line-height: 1.55;
+}
+
+.email-triage-form textarea:focus {
+  border-color: rgba(59, 130, 246, 0.58);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.email-triage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.email-triage-actions button,
+.email-draft button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--muted-strong);
+  cursor: pointer;
+  padding: 0 12px;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.email-triage-actions button:first-child {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.email-triage-actions button:not(:disabled):hover,
+.email-draft button:not(:disabled):hover {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.email-triage-actions button:first-child:not(:disabled):hover {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.email-triage-actions button:disabled,
+.email-draft button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.email-triage-error {
+  margin: 0;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 8px;
+  background: rgba(254, 242, 242, 0.9);
+  color: #b91c1c;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+
+.email-triage-results {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.email-summary-card,
+.email-empty-state,
+.email-result-card,
+.email-final-summary {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.email-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.email-summary-card strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.email-summary-card span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.email-empty-state {
+  display: grid;
+  min-height: 330px;
+  place-items: center;
+  color: var(--muted);
+  padding: 24px;
+  text-align: center;
+}
+
+.email-empty-state.loading {
+  color: var(--blue-dark);
+  font-weight: 900;
+}
+
+.email-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.email-result-card {
+  overflow: hidden;
+  border-left-width: 6px;
+  padding: 16px;
+}
+
+.email-result-card.high {
+  border-left-color: #dc2626;
+}
+
+.email-result-card.medium {
+  border-left-color: #eab308;
+}
+
+.email-result-card.low {
+  border-left-color: #16a34a;
+}
+
+.email-result-card.spam {
+  border-left-color: #64748b;
+}
+
+.email-result-card > header,
+.email-draft > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.email-result-card h2 {
+  margin-top: 6px;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.email-priority,
+.email-category {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.email-priority {
+  background: #f8fafc;
+  color: var(--muted-strong);
+}
+
+.email-category {
+  flex: 0 0 auto;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.email-reason {
+  margin: 12px 0 0;
+  color: var(--muted-strong);
+  line-height: 1.55;
+}
+
+.email-draft {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.email-draft strong {
+  color: var(--text);
+}
+
+.email-draft blockquote {
+  margin: 0;
+  border-left: 4px solid rgba(59, 130, 246, 0.36);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--muted-strong);
+  padding: 12px 14px;
+  line-height: 1.58;
+  white-space: pre-wrap;
+}
+
+.email-final-summary {
+  padding: 16px;
+}
+
+@media (max-width: 940px) {
+  .email-triage-header,
+  .email-summary-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .email-triage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .email-triage-form {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 620px) {
+  .email-triage-form,
+  .email-triage-results,
+  .email-triage-header {
+    padding: 16px;
+  }
+
+  .email-triage-form textarea {
+    min-height: 260px;
+  }
+
+  .email-result-card > header,
+  .email-draft > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

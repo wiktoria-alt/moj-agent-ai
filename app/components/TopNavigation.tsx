@@ -26,6 +26,7 @@ const links: NavLink[] = [
   { href: "/react", label: "ReAct" },
   { href: "/travel", label: "Podróże" },
   { href: "/extract", label: "Analizator" },
+  { href: "/email-triage", label: "📧 E-mail Triage" },
 ];
 
 type TopNavigationProps = {
