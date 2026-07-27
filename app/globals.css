@@ -5228,3 +5228,122 @@ h2 {
 .report-save-status.error {
   color: #b91c1c;
 }
+
+.saved-reports-panel {
+  margin-top: 18px;
+}
+
+.saved-reports-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  padding: 20px 24px;
+}
+
+.saved-reports-header button,
+.saved-report-preview button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--muted-strong);
+  cursor: pointer;
+  padding: 0 12px;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.saved-reports-header button:not(:disabled):hover,
+.saved-report-preview button:not(:disabled):hover {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  color: #0f766e;
+}
+
+.saved-reports-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  min-height: 360px;
+  background: var(--surface-muted);
+}
+
+.saved-reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid var(--line);
+  padding: 16px;
+}
+
+.saved-reports-list button {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--text);
+  cursor: pointer;
+  padding: 12px;
+  text-align: left;
+}
+
+.saved-reports-list button.active,
+.saved-reports-list button:hover {
+  border-color: rgba(15, 118, 110, 0.36);
+  background: #f0fdfa;
+}
+
+.saved-reports-list strong {
+  overflow-wrap: anywhere;
+}
+
+.saved-reports-list span,
+.saved-reports-empty {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.saved-reports-empty {
+  margin: 0;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.saved-report-preview {
+  min-width: 0;
+  margin: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 18px;
+}
+
+.saved-report-preview > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+}
+
+.saved-report-preview h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+@media (max-width: 860px) {
+  .saved-reports-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-reports-list {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}

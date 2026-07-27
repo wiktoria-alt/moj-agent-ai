@@ -20,6 +20,13 @@ const sampleTopics = [
   "Rynek nieruchomosci w Krakowie - ceny, trendy, prognozy",
 ] as const;
 
+type StoredReport = {
+  content: string;
+  created_at: string;
+  id: string;
+  title: string;
+};
+
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {
   return message.parts
     .filter((part) => part.type === "text")
@@ -33,6 +40,10 @@ export default function ReportPage() {
   const [saveError, setSaveError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [savedReports, setSavedReports] = useState<StoredReport[]>([]);
+  const [selectedReport, setSelectedReport] = useState<StoredReport | null>(null);
+  const [reportsError, setReportsError] = useState("");
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { clearError, error, messages, sendMessage, setMessages, status } =
     useChat({ transport: reportTransport });
@@ -62,6 +73,51 @@ export default function ReportPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
+
+  useEffect(() => {
+    void loadSavedReports();
+  }, []);
+
+  async function loadSavedReports() {
+    setIsLoadingReports(true);
+    setReportsError("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        setSavedReports([]);
+        setReportsError("Zaloguj się, żeby zobaczyć zapisane raporty.");
+        return;
+      }
+
+      const response = await fetch("/api/reports", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        reports?: StoredReport[];
+      };
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error ?? "Nie udało się pobrać raportów.");
+      }
+
+      setSavedReports(data.reports ?? []);
+    } catch (loadError) {
+      setReportsError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Nie udało się pobrać raportów.",
+      );
+    } finally {
+      setIsLoadingReports(false);
+    }
+  }
 
   async function generateReport(nextTopic: string) {
     const cleanTopic = nextTopic.trim();
@@ -144,6 +200,7 @@ export default function ReportPage() {
       }
 
       setSavedMessage(`Zapisano w bazie: ${data.report?.title ?? "raport"}`);
+      await loadSavedReports();
     } catch (saveReportError) {
       setSaveError(
         saveReportError instanceof Error
@@ -259,6 +316,68 @@ export default function ReportPage() {
           {savedMessage && <p className="report-save-status success">{savedMessage}</p>}
           {saveError && <p className="report-save-status error">{saveError}</p>}
         </footer>
+      </section>
+
+      <section className="report-panel saved-reports-panel" aria-label="Zapisane raporty">
+        <header className="saved-reports-header">
+          <div>
+            <p className="eyebrow">Archiwum</p>
+            <h2>Zapisane raporty</h2>
+          </div>
+          <button disabled={isLoadingReports} onClick={() => void loadSavedReports()} type="button">
+            {isLoadingReports ? "Odświeżam..." : "Odśwież"}
+          </button>
+        </header>
+
+        {reportsError && <p className="report-save-status error">{reportsError}</p>}
+
+        <div className="saved-reports-grid">
+          <aside className="saved-reports-list">
+            {savedReports.length === 0 && !reportsError ? (
+              <p className="saved-reports-empty">
+                Nie ma jeszcze zapisanych raportów.
+              </p>
+            ) : (
+              savedReports.map((report) => (
+                <button
+                  className={selectedReport?.id === report.id ? "active" : undefined}
+                  key={report.id}
+                  onClick={() => setSelectedReport(report)}
+                  type="button"
+                >
+                  <strong>{report.title}</strong>
+                  <span>
+                    {new Intl.DateTimeFormat("pl-PL", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(report.created_at))}
+                  </span>
+                </button>
+              ))
+            )}
+          </aside>
+
+          <article className="saved-report-preview markdown-message">
+            {selectedReport ? (
+              <>
+                <header>
+                  <h3>{selectedReport.title}</h3>
+                  <button
+                    onClick={() => void navigator.clipboard.writeText(selectedReport.content)}
+                    type="button"
+                  >
+                    Kopiuj
+                  </button>
+                </header>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {selectedReport.content}
+                </ReactMarkdown>
+              </>
+            ) : (
+              <p>Wybierz raport z listy, żeby zobaczyć jego treść.</p>
+            )}
+          </article>
+        </div>
       </section>
     </main>
   );

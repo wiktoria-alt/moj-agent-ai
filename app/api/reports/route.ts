@@ -5,6 +5,13 @@ type SaveReportBody = {
   title?: unknown;
 };
 
+type StoredReport = {
+  content: string;
+  created_at: string;
+  id: string;
+  title: string;
+};
+
 function createAuthorizedSupabase(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -42,6 +49,58 @@ function isMissingReportsTableError(error: { code?: string; message?: string }) 
     (message.includes("public.reports") && message.includes("schema cache")) ||
     (message.includes("relation") && message.includes("reports"))
   );
+}
+
+export async function GET(request: Request) {
+  try {
+    const supabase = createAuthorizedSupabase(request);
+
+    if (!supabase) {
+      return Response.json(
+        { error: "Zaloguj się, żeby zobaczyć zapisane raporty." },
+        { status: 401 },
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("reports")
+      .select("id, title, content, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (!error) {
+      return Response.json({ reports: data ?? [], storage: "reports" });
+    }
+
+    if (!isMissingReportsTableError(error)) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    const { data: documents, error: documentsError } = await supabase
+      .from("documents")
+      .select("id, title, content, created_at, metadata")
+      .eq("metadata->>type", "report")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (documentsError) {
+      return Response.json({ error: documentsError.message }, { status: 500 });
+    }
+
+    const reports: StoredReport[] = (documents ?? []).map((document) => ({
+      content: String(document.content ?? ""),
+      created_at: document.created_at,
+      id: document.id,
+      title: document.title ?? "Raport",
+    }));
+
+    return Response.json({ reports, storage: "documents" });
+  } catch {
+    return Response.json(
+      { error: "Nie udało się pobrać zapisanych raportów." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {
