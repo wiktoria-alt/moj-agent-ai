@@ -33,6 +33,17 @@ function getReportTitle(title: unknown, content: string) {
   return (heading || "Raport").slice(0, 180);
 }
 
+function isMissingReportsTableError(error: { code?: string; message?: string }) {
+  const message = error.message?.toLowerCase() ?? "";
+
+  return (
+    error.code === "PGRST205" ||
+    error.code === "42P01" ||
+    (message.includes("public.reports") && message.includes("schema cache")) ||
+    (message.includes("relation") && message.includes("reports"))
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as SaveReportBody;
@@ -66,21 +77,49 @@ export async function POST(request: Request) {
       );
     }
 
+    const title = getReportTitle(body.title, content);
     const { data, error } = await supabase
       .from("reports")
       .insert({
         content,
-        title: getReportTitle(body.title, content),
+        title,
         user_id: user.id,
       })
       .select("id, title, created_at")
       .single();
 
     if (error) {
+      if (isMissingReportsTableError(error)) {
+        const { data: documentData, error: documentError } = await supabase
+          .from("documents")
+          .insert({
+            content,
+            metadata: {
+              source: "report-generator",
+              type: "report",
+            },
+            title,
+            user_id: user.id,
+          })
+          .select("id, title, created_at")
+          .single();
+
+        if (documentError) {
+          return Response.json({ error: documentError.message }, { status: 500 });
+        }
+
+        return Response.json({
+          report: documentData,
+          storage: "documents",
+          warning:
+            "Tabela reports nie istnieje, więc raport zapisano w tabeli documents.",
+        });
+      }
+
       return Response.json({ error: error.message }, { status: 500 });
     }
 
-    return Response.json({ report: data });
+    return Response.json({ report: data, storage: "reports" });
   } catch {
     return Response.json({ error: "Niepoprawne body JSON." }, { status: 400 });
   }
