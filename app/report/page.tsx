@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { TopNavigation } from "../components/TopNavigation";
 import { getReadableErrorMessage } from "../lib/errors";
+import { supabase } from "../lib/supabase";
 
 const reportTransport = new DefaultChatTransport({
   api: "/api/report",
@@ -29,6 +30,9 @@ function getMessageText(message: { parts: Array<{ type: string; text?: string }>
 export default function ReportPage() {
   const [topic, setTopic] = useState("");
   const [copied, setCopied] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { clearError, error, messages, sendMessage, setMessages, status } =
     useChat({ transport: reportTransport });
@@ -68,6 +72,8 @@ export default function ReportPage() {
 
     clearError();
     setCopied(false);
+    setSaveError("");
+    setSavedMessage("");
     setTopic("");
 
     try {
@@ -87,6 +93,8 @@ export default function ReportPage() {
     setMessages([]);
     setTopic("");
     setCopied(false);
+    setSaveError("");
+    setSavedMessage("");
   }
 
   async function copyReport() {
@@ -97,6 +105,54 @@ export default function ReportPage() {
     await navigator.clipboard.writeText(latestReport);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  async function saveReport() {
+    if (!latestReport || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+    setSavedMessage("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Zaloguj się, żeby zapisać raport w bazie.");
+      }
+
+      const response = await fetch("/api/reports", {
+        body: JSON.stringify({ content: latestReport }),
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+
+      const data = (await response.json()) as {
+        error?: string;
+        report?: { id: string; title: string };
+      };
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error ?? "Nie udało się zapisać raportu.");
+      }
+
+      setSavedMessage(`Zapisano w bazie: ${data.report?.title ?? "raport"}`);
+    } catch (saveReportError) {
+      setSaveError(
+        saveReportError instanceof Error
+          ? saveReportError.message
+          : "Nie udało się zapisać raportu.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -187,12 +243,21 @@ export default function ReportPage() {
             {copied ? "Skopiowano" : "📋 Kopiuj do schowka"}
           </button>
           <button
+            disabled={!latestReport || isLoading || isSaving}
+            onClick={saveReport}
+            type="button"
+          >
+            {isSaving ? "Zapisuję..." : "💾 Zapisz w bazie"}
+          </button>
+          <button
             disabled={isLoading || renderedMessages.length === 0}
             onClick={clearReport}
             type="button"
           >
             Nowy raport
           </button>
+          {savedMessage && <p className="report-save-status success">{savedMessage}</p>}
+          {saveError && <p className="report-save-status error">{saveError}</p>}
         </footer>
       </section>
     </main>
