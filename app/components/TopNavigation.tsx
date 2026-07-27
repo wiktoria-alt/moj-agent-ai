@@ -28,6 +28,7 @@ const links: NavLink[] = [
   { href: "/extract", label: "Analizator" },
   { href: "/email-triage", label: "📧 E-mail Triage" },
   { href: "/report", label: "📊 Raporty" },
+  { href: "/competitor", label: "🏢 Konkurencja" },
 ];
 
 type TopNavigationProps = {
@@ -47,7 +48,7 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
       className={`top-nav ${className} ${isOpen ? "open" : ""}`.trim()}
       aria-label="Nawigacja"
     >
-      <a className="nav-brand" href="/" aria-label="Agent AI — Centrum dowodzenia">
+      <a className="nav-brand" href="/" aria-label="Agent AI - Centrum dowodzenia">
         <span className="nav-brand-icon" aria-hidden="true">⚡</span>
         <span className="nav-brand-copy">
           <strong>Agent AI</strong>
@@ -94,7 +95,11 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
         })}
         <button
           className="logout-button"
-          onClick={() => void supabase.auth.signOut().then(() => { window.location.href = "/login"; })}
+          onClick={() =>
+            void supabase.auth.signOut().then(() => {
+              window.location.href = "/login";
+            })
+          }
           type="button"
         >
           Wyloguj
