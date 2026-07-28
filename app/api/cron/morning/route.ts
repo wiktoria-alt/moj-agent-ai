@@ -196,7 +196,18 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseKey);
 }
 
-function isAuthorized(request: Request) {
+function getSupabaseAuthClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey);
+}
+
+async function isAuthorized(request: Request) {
   if (process.env.NODE_ENV !== "production") {
     return true;
   }
@@ -204,11 +215,24 @@ function isAuthorized(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get("authorization");
 
-  return Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`);
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+    return true;
+  }
+
+  const token = authHeader?.replace(/^Bearer\s+/i, "");
+  const supabase = getSupabaseAuthClient();
+
+  if (!token || !supabase) {
+    return false;
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+
+  return !error && Boolean(data.user);
 }
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!(await isAuthorized(request))) {
     return new Response("Unauthorized", { status: 401 });
   }
 

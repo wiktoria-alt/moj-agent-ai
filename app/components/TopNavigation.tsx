@@ -30,6 +30,7 @@ const links: NavLink[] = [
   { href: "/report", label: "📊 Raporty" },
   { href: "/meal-planner", label: "🍽️ Posiłki" },
   { href: "/competitor", label: "🏢 Konkurencja" },
+  { href: "/briefings", label: "📰 Briefingi" },
 ];
 
 type TopNavigationProps = {
