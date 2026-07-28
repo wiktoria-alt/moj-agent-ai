@@ -49,17 +49,17 @@ export default function BriefingsPage() {
     setError("");
 
     try {
-      const { data, error: briefingsError } = await supabase
-        .from("briefings")
-        .select("id, created_at, content, date")
-        .order("created_at", { ascending: false })
-        .limit(30);
+      const response = await fetch("/api/briefings");
+      const data = (await response.json()) as {
+        briefings?: Briefing[];
+        error?: string;
+      };
 
-      if (briefingsError) {
-        throw new Error(briefingsError.message);
+      if (!response.ok || data.error) {
+        throw new Error(data.error ?? "Nie udało się pobrać briefingów.");
       }
 
-      const nextBriefings = (data ?? []) as Briefing[];
+      const nextBriefings = data.briefings ?? [];
       setBriefings(nextBriefings);
 
       if (nextSelectedId) {
