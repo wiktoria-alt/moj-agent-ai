@@ -147,7 +147,7 @@ export default function CompetitorPage() {
             <p className="eyebrow">Agent strategiczny</p>
             <h1>🏢 Analiza konkurencji</h1>
             <p className="agent-description">
-              Podaj firmy - agent porówna je za Ciebie w tabeli i napisze rekomendację.
+              Podaj firmy - agent porówna je za Ciebie.
             </p>
           </div>
           <span className="competitor-status">

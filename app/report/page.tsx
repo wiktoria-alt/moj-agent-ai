@@ -15,9 +15,9 @@ const reportTransport = new DefaultChatTransport({
 
 const sampleTopics = [
   "Rynek AI w Polsce - trendy, firmy, prognozy na 2026",
-  "Porownanie platform e-commerce: Shopify vs WooCommerce vs PrestaShop",
-  "Wplyw pracy zdalnej na produktywnosc - badania i statystyki",
-  "Rynek nieruchomosci w Krakowie - ceny, trendy, prognozy",
+  "Porównanie platform e-commerce: Shopify vs WooCommerce vs PrestaShop",
+  "Wpływ pracy zdalnej na produktywność - badania i statystyki",
+  "Rynek nieruchomości w Krakowie - ceny, trendy, prognozy",
 ] as const;
 
 type StoredReport = {
@@ -216,13 +216,13 @@ export default function ReportPage() {
     <main className="chat-shell report-shell">
       <TopNavigation className="think-nav" />
 
-      <section className="report-panel" aria-label="Generator raportow">
+      <section className="report-panel" aria-label="Generator raportów">
         <header className="report-header">
           <div>
             <p className="eyebrow">Agent analityczny</p>
             <h1>📊 Generator raportów</h1>
             <p className="agent-description">
-              Opisz temat - agent napisze raport biznesowy z analizą, wnioskami i źródłami.
+              Opisz temat - agent napisze raport biznesowy.
             </p>
           </div>
           <span className="report-status">
@@ -245,7 +245,7 @@ export default function ReportPage() {
           </div>
         </form>
 
-        <div className="report-examples" aria-label="Przykladowe tematy">
+        <div className="report-examples" aria-label="Przykładowe tematy">
           {sampleTopics.map((sampleTopic) => (
             <button
               disabled={isLoading}
@@ -334,9 +334,7 @@ export default function ReportPage() {
         <div className="saved-reports-grid">
           <aside className="saved-reports-list">
             {savedReports.length === 0 && !reportsError ? (
-              <p className="saved-reports-empty">
-                Nie ma jeszcze zapisanych raportów.
-              </p>
+              <p className="saved-reports-empty">Nie ma jeszcze zapisanych raportów.</p>
             ) : (
               savedReports.map((report) => (
                 <button

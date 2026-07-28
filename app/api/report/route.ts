@@ -48,6 +48,7 @@ function createLocalUIMessageResponse(text: string) {
 }
 
 function getReportSystemPrompt() {
+  const currentDate = todayInPoland();
   const searchInstruction = enableSearchGrounding
     ? "- Używaj google_search do aktualnych informacji i źródeł branżowych."
     : "- Google Search grounding jest wyłączony. Używaj searchWikipedia, readWebPage dla podanych adresów URL i wyraźnie zaznacz, gdy brakuje aktualnych źródeł.";
@@ -55,7 +56,7 @@ function getReportSystemPrompt() {
   return `Jesteś profesjonalnym analitykiem biznesowym. Gdy użytkownik poda temat,
 AUTONOMICZNIE zbierasz informacje i piszesz raport.
 
-Dzisiejsza data: ${todayInPoland()}.
+Dzisiejsza data: ${currentDate}.
 
 ## TWÓJ PROCES:
 1. Przeanalizuj temat - co trzeba zbadać?
@@ -66,7 +67,7 @@ Dzisiejsza data: ${todayInPoland()}.
 ## FORMAT RAPORTU:
 
 # 📊 Raport: [TEMAT]
-Data: ${todayInPoland()}
+Data: ${currentDate}
 Autor: Agent AI
 
 ## Streszczenie (Executive Summary)
