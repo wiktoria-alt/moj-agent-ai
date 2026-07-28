@@ -155,7 +155,7 @@ export default function MealPlannerPage() {
             <p className="eyebrow">Twój scenariusz W4</p>
             <h1>🍽️ Planer posiłków</h1>
             <p className="agent-description">
-              Podaj preferencje, budżet i liczbę dni - agent ułoży jadłospis, listę zakupów i koszty.
+              Podaj preferencje, budżet i liczbę dni - agent ułoży jadłospis.
             </p>
           </div>
           <span className="meal-status">
@@ -234,7 +234,7 @@ export default function MealPlannerPage() {
 
           {isLoading && renderedMessages.at(-1)?.role !== "assistant" && (
             <article className="meal-message assistant loading">
-              <p>Liczy koszty, układam jadłospis i listę zakupów...</p>
+              <p>Liczę koszty, układam jadłospis i listę zakupów...</p>
             </article>
           )}
 
