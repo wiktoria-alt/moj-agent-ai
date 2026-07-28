@@ -28,8 +28,8 @@ const links: NavLink[] = [
   { href: "/extract", label: "Analizator" },
   { href: "/email-triage", label: "📧 E-mail Triage" },
   { href: "/report", label: "📊 Raporty" },
-  { href: "/competitor", label: "🏢 Konkurencja" },
   { href: "/meal-planner", label: "🍽️ Posiłki" },
+  { href: "/competitor", label: "🏢 Konkurencja" },
 ];
 
 type TopNavigationProps = {

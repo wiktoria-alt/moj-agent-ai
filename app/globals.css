@@ -3685,6 +3685,17 @@ h2 {
     border-radius: 8px;
   }
 
+  /* sidebar compact workshop links */
+  .top-nav a {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 0.86rem;
+  }
+
+  .nav-brand {
+    min-height: 46px;
+  }
+
   .chat-shell {
     padding-left: 264px;
   }
