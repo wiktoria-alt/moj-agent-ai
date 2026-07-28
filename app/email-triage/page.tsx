@@ -7,28 +7,28 @@ import { TopNavigation } from "../components/TopNavigation";
 
 const sampleEmails = `Mail 1 - PILNY:
 Od: jan.kowalski@firma.pl
-Temat: PILNE - Problem z faktura
-Tresc: Dzien dobry, mam problem z faktura FV/2026/001. Kwota jest nieprawidlowa - powinno byc 5000 zl a jest 3000 zl. Prosze o PILNA korekte. Termin platnosci mija jutro.
+Temat: PILNE - Problem z fakturą
+Treść: Dzień dobry, mam problem z fakturą FV/2026/001. Kwota jest nieprawidłowa - powinno być 5000 zł a jest 3000 zł. Proszę o PILNĄ korektę. Termin płatności mija jutro.
 
 Mail 2 - SPAM:
 Od: winner@lucky-prize.com
 Temat: Congratulations! You won $1,000,000
-Tresc: Click here to claim your prize! Limited time offer. Act now!
+Treść: Click here to claim your prize! Limited time offer. Act now!
 
 Mail 3 - OFERTA:
 Od: anna.nowak@partner.pl
-Temat: Propozycja wspolpracy
-Tresc: Dzien dobry, reprezentuje firme ABC Solutions. Chcielibysmy omowic mozliwosc wspolpracy w zakresie dostarczania uslug IT. Czy mozemy umowic sie na spotkanie w przyszlym tygodniu?
+Temat: Propozycja współpracy
+Treść: Dzień dobry, reprezentuję firmę ABC Solutions. Chcielibyśmy omówić możliwość współpracy w zakresie dostarczania usług IT. Czy możemy umówić się na spotkanie w przyszłym tygodniu?
 
 Mail 4 - REKLAMACJA:
 Od: klient123@gmail.com
-Temat: Nie dziala usluga od 3 dni
-Tresc: Witam, od poniedzialku nie moge sie zalogowac do panelu klienta. Probowalem resetowac haslo ale nie dostaje maila. To juz trzeci dzien! Jesli nie rozwiazecie tego dzis, zrezygnuje z uslugi.
+Temat: Nie działa usługa od 3 dni
+Treść: Witam, od poniedziałku nie mogę się zalogować do panelu klienta. Próbowałem resetować hasło ale nie dostaję maila. To już trzeci dzień! Jeśli nie rozwiążecie tego dziś, zrezygnuję z usługi.
 
 Mail 5 - INFO:
-Od: newsletter@branzowy-portal.pl
+Od: newsletter@branżowy-portal.pl
 Temat: Nowe trendy AI w biznesie - raport 2026
-Tresc: Zapraszamy do lektury naszego najnowszego raportu o zastosowaniach AI w polskich firmach. Pobierz za darmo na naszej stronie.`;
+Treść: Zapraszamy do lektury naszego najnowszego raportu o zastosowaniach AI w polskich firmach. Pobierz za darmo na naszej stronie.`;
 
 type ParsedMail = {
   category: string;
@@ -87,7 +87,9 @@ function detectPriority(section: string): ParsedMail["priority"] {
 }
 
 function parseDraft(section: string) {
-  const draftMatch = section.match(/\*\*Proponowana odpowied[zź]:\*\*([\s\S]*?)(?:\n---|\n###|\nPODSUMOWANIE|$)/i);
+  const draftMatch = section.match(
+    /\*\*Proponowana odpowied(?:ź|z):\*\*([\s\S]*?)(?:\n---|\n###|\nPODSUMOWANIE|$)/i,
+  );
   const draft = draftMatch?.[1] ?? "";
 
   return draft
@@ -141,6 +143,9 @@ export default function EmailTriagePage() {
   const cards = useMemo(() => parseMailCards(result), [result]);
   const summary = useMemo(() => getSummaryFromCards(cards), [cards]);
   const hasCards = cards.length > 0;
+  const finalSummary = result.includes("PODSUMOWANIE")
+    ? result.slice(result.indexOf("PODSUMOWANIE"))
+    : "";
 
   async function analyzeEmails(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -167,7 +172,7 @@ export default function EmailTriagePage() {
       });
 
       if (!response.ok || response.body == null) {
-        throw new Error("Nie udalo sie uruchomic analizy maili.");
+        throw new Error("Nie udało się uruchomić analizy maili.");
       }
 
       const reader = response.body.getReader();
@@ -189,7 +194,7 @@ export default function EmailTriagePage() {
         setError(
           caughtError instanceof Error
             ? caughtError.message
-            : "Nieznany blad podczas analizy.",
+            : "Nieznany błąd podczas analizy.",
         );
       }
     } finally {
@@ -228,7 +233,7 @@ export default function EmailTriagePage() {
             <p className="eyebrow">Agent zadaniowy</p>
             <h1>📧 E-mail Triage</h1>
             <p className="agent-description">
-              Wklej maile - agent posortuje je, nada priorytety i napisze odpowiedzi.
+              Wklej maile - agent posortuje i napisze odpowiedzi.
             </p>
           </div>
           <div className="email-triage-status">
@@ -243,7 +248,7 @@ export default function EmailTriagePage() {
             <textarea
               id="emails"
               onChange={(event) => setInput(event.target.value)}
-              placeholder="Wklej maile tutaj - oddziel je pusta linia..."
+              placeholder="Wklej maile tutaj - oddziel je pustą linią..."
               value={input}
             />
 
@@ -266,8 +271,7 @@ export default function EmailTriagePage() {
             {hasCards && (
               <div className="email-summary-card">
                 <strong>
-                  {summary.high} pilne, {summary.medium} średnie, {summary.low} niskie,
-                  {" "}
+                  {summary.high} pilne, {summary.medium} średnie, {summary.low} niskie,{" "}
                   {summary.spam} spam
                 </strong>
                 <span>
@@ -338,11 +342,9 @@ export default function EmailTriagePage() {
               )
             )}
 
-            {result.includes("PODSUMOWANIE") && (
+            {finalSummary && (
               <article className="email-final-summary markdown-message">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {result.slice(result.indexOf("PODSUMOWANIE"))}
-                </ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{finalSummary}</ReactMarkdown>
               </article>
             )}
           </section>

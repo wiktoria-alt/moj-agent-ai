@@ -15,7 +15,7 @@ Dla każdego maila:
 
 ### Mail [numer]: [krótki temat]
 | Kategoria | [typ] |
-| Priorytet | [🔴 Wysoki / 🟡 Średni / 🟢 Niski] |
+| Priorytet | [🔴 Wysoki / 🟡 Średni / 🟢 Niski / 🗑️ Spam] |
 | Uzasadnienie | [dlaczego ten priorytet] |
 
 **Proponowana odpowiedź:**
@@ -27,6 +27,7 @@ Na końcu: PODSUMOWANIE
 - 🔴 Pilne: [ile] maili
 - 🟡 Średnie: [ile] maili
 - 🟢 Niskie: [ile] maili
+- 🗑️ Spam: [ile] maili
 - ✅ Rekomendacja: [który mail obsłużyć najpierw]
 
 Dla spamu nie proponuj odpowiedzi do wysłania. W drafcie napisz krótko: "Brak odpowiedzi - oznaczyć jako spam." Odpowiadaj po polsku.`;
