@@ -25,12 +25,25 @@ type HolidayData = {
   name: string;
 };
 
+type NewsItem = {
+  source: string;
+  title: string;
+  url: string;
+};
+
 function todayInPoland() {
   return new Intl.DateTimeFormat("en-CA", {
     day: "2-digit",
     month: "2-digit",
     timeZone: "Europe/Warsaw",
     year: "numeric",
+  }).format(new Date());
+}
+
+function formatPolishDate() {
+  return new Intl.DateTimeFormat("pl-PL", {
+    dateStyle: "long",
+    timeZone: "Europe/Warsaw",
   }).format(new Date());
 }
 
@@ -130,6 +143,47 @@ async function getTodayHoliday(): Promise<HolidayData | null> {
   return holidays.find((holiday) => holiday.date === todayInPoland()) ?? null;
 }
 
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+async function getNews(): Promise<NewsItem[]> {
+  try {
+    const response = await fetch(
+      "https://news.google.com/rss/search?q=Polska%20biznes%20technologia&hl=pl&gl=PL&ceid=PL:pl",
+      { cache: "no-store" },
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const xml = await response.text();
+    const items = [...xml.matchAll(/<item>[\s\S]*?<title>([\s\S]*?)<\/title>[\s\S]*?<link>([\s\S]*?)<\/link>[\s\S]*?<\/item>/g)]
+      .slice(0, 5)
+      .map((match) => {
+        const title = decodeHtmlEntities(match[1].replace(/<!\[CDATA\[|\]\]>/g, "").trim());
+        const url = decodeHtmlEntities(match[2].replace(/<!\[CDATA\[|\]\]>/g, "").trim());
+        const [cleanTitle, source = "Google News"] = title.split(" - ").map((part) => part.trim());
+
+        return {
+          source,
+          title: cleanTitle,
+          url,
+        };
+      });
+
+    return items;
+  } catch {
+    return [];
+  }
+}
+
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey =
@@ -159,28 +213,44 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [weather, eur, usd, holiday] = await Promise.all([
+    const [weather, eur, usd, holiday, news] = await Promise.all([
       getWeather(),
       getExchangeRate("EUR"),
       getExchangeRate("USD"),
       getTodayHoliday(),
+      getNews(),
     ]);
     const date = todayInPoland();
+    const humanDate = formatPolishDate();
     const currentDateTime = formatPolishDateTime();
+    const newsLines =
+      news.length > 0
+        ? news
+            .map((item, index) => `${index + 1}. ${item.title} (${item.source}) - ${item.url}`)
+            .join("\n")
+        : "Nie udało się pobrać aktualnych nagłówków wiadomości.";
 
     const { text } = await generateText({
-      maxOutputTokens: 1800,
+      maxOutputTokens: 2200,
       maxRetries: 0,
       model: google("gemini-3.1-flash-lite"),
       prompt: `Dane wejściowe:
+- Data ISO do zapisu: ${date}
+- Data do nagłówka: ${humanDate}
 - Data i czas: ${currentDateTime}
 - Pogoda w ${weather.city}: ${weather.temperature}°C, wilgotność ${weather.humidity}%, wiatr ${weather.windSpeed} km/h
 - EUR: ${eur.mid} PLN (${eur.date})
 - USD: ${usd.mid} PLN (${usd.date})
-- Święto dzisiaj: ${holiday ? `${holiday.localName} (${holiday.name})` : "brak ustawowego święta w Polsce"}`,
-      system: `Jesteś osobistym asystentem. Napisz poranny briefing w formacie:
+- Święto dzisiaj: ${holiday ? `${holiday.localName} (${holiday.name})` : "brak ustawowego święta w Polsce"}
+- Najważniejsze wiadomości:
+${newsLines}`,
+      system: `Jesteś osobistym asystentem. Napisz poranny briefing po polsku.
 
-# ☀️ Dzień dobry! Twój briefing na [data]
+Użyj dokładnie tej daty w nagłówku: ${humanDate}. Nie przesuwaj daty na jutro.
+
+Format:
+
+# ☀️ Dzień dobry! Twój briefing na ${humanDate}
 
 ## 🌤️ Pogoda
 [temperatura, opis, co ubrać]
@@ -189,13 +259,16 @@ export async function GET(request: Request) {
 - EUR: [kurs] PLN
 - USD: [kurs] PLN
 
+## 📰 Najważniejsze wiadomości
+[3-5 krótkich punktów na podstawie przekazanych nagłówków]
+
 ## 📅 Dzisiejszy dzień
 - Dzień tygodnia: [...]
 - Uwagi: [czy dziś święto? dzień wolny?]
 
 ## 💡 Porada dnia
 [Krótka, pozytywna porada na dzień]`,
-      temperature: 0.4,
+      temperature: 0.35,
     });
 
     const supabase = getSupabaseClient();
