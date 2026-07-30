@@ -12,6 +12,11 @@ import {
   type ToolSet,
   type UIMessage,
 } from "ai";
+import {
+  checkDailyTokenBudget,
+  DAILY_TOKEN_LIMIT_MESSAGE,
+  logApiUsage,
+} from "../../lib/apiUsage";
 import { getModelErrorMessage } from "../../lib/errors";
 import {
   getAiModel,
@@ -1191,6 +1196,7 @@ export async function POST(req: Request) {
   const parsedImage = parseImageDataUrl(image);
   const selectedMode = getMode(mode);
   const selectedModel = getAiModel(model);
+  const selectedModelId = googleModelIds[selectedModel];
   const recentMessages = messages.slice(
     selectedMode === "agent" ? -8 : -MAX_MESSAGES_TO_SEND,
   );
@@ -1233,6 +1239,11 @@ export async function POST(req: Request) {
     await saveDetectedUserName(userId, detectedUserName, profileSupabase);
   }
 
+  const tokenBudget = await checkDailyTokenBudget(profileSupabase, userId);
+  if (!tokenBudget.allowed) {
+    return createLocalUIMessageResponse(DAILY_TOKEN_LIMIT_MESSAGE);
+  }
+
   const storedUserProfile = await getStoredUserProfile(userId, profileSupabase);
   const personalizationPrompt = createPersonalizationPrompt(storedUserProfile);
   const personalizationTools = createPersonalizationTools(userId, profileSupabase);
@@ -1272,7 +1283,13 @@ export async function POST(req: Request) {
           parsedImage,
           requestAgentTools,
         ),
-        model: google(googleModelIds[selectedModel]),
+        model: google(selectedModelId),
+        onEnd: ({ usage }) =>
+          logApiUsage(profileSupabase, usage, {
+            endpoint: "/api/chat",
+            model: selectedModelId,
+            user_id: userId,
+          }),
         prepareStep: prioritizeKnowledge
           ? ({ stepNumber }) =>
               stepNumber === 0
@@ -1321,7 +1338,7 @@ ${responseLength}`,
     };
 
     const result = await generateText({
-      model: google(googleModelIds[selectedModel]),
+      model: google(selectedModelId),
       maxRetries: 0,
       maxOutputTokens: selectedModel === "pro" ? 2200 : 1600,
       prepareStep: forcedFirstMainTool
@@ -1363,6 +1380,12 @@ ${responseLength}`,
         parsedImage,
         requestTools,
       ),
+    });
+
+    await logApiUsage(profileSupabase, result.usage, {
+      endpoint: "/api/chat",
+      model: selectedModelId,
+      user_id: userId,
     });
 
     if (didKnowledgeSearchReturnNoResults(result.toolResults)) {
