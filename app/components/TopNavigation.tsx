@@ -31,6 +31,7 @@ const links: NavLink[] = [
   { href: "/meal-planner", label: "🍽️ Posiłki" },
   { href: "/competitor", label: "🏢 Konkurencja" },
   { href: "/briefings", label: "📰 Briefingi" },
+  { href: "/skd-calculator", label: "⚖️ Kalkulator SKD" },
 ];
 
 type TopNavigationProps = {

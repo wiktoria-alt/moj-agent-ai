@@ -6042,3 +6042,270 @@ h2 {
     padding-right: 16px;
   }
 }
+
+/* Zadanie 7: wstepny kalkulator roszczenia SKD */
+.skd-shell {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(37, 99, 235, 0.12), transparent 30rem),
+    radial-gradient(circle at 10% 16%, rgba(16, 185, 129, 0.13), transparent 28rem),
+    #f8fafc;
+}
+
+.skd-panel {
+  width: min(100%, 1180px);
+  align-self: center;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.skd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  padding: 24px;
+}
+
+.skd-header button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0 12px;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.skd-header button:not(:disabled):hover {
+  background: #1e40af;
+}
+
+.skd-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 18px;
+  background: var(--surface-muted);
+  padding: 20px 24px;
+}
+
+.skd-form {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.skd-form-grid,
+.skd-date-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.skd-form-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.skd-date-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.skd-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted-strong);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.skd-form input,
+.skd-form select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  outline: none;
+  color: var(--text);
+  padding: 0 12px;
+}
+
+.skd-form input:focus,
+.skd-form select:focus {
+  border-color: rgba(29, 78, 216, 0.58);
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.11);
+}
+
+.skd-summary {
+  align-self: stretch;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  border: 1px solid rgba(29, 78, 216, 0.18);
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 20px;
+}
+
+.skd-summary span {
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.skd-summary strong {
+  color: #172554;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.skd-summary p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.skd-results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  background: var(--surface-muted);
+  padding: 0 24px 20px;
+}
+
+.skd-card,
+.skd-note,
+.skd-comparison {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.skd-card {
+  padding: 16px;
+}
+
+.skd-card.accent {
+  border-color: rgba(5, 150, 105, 0.26);
+  background: #ecfdf5;
+}
+
+.skd-card h2,
+.skd-note h2,
+.skd-comparison h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.skd-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.skd-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.skd-card dt {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.skd-card dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 950;
+  text-align: right;
+}
+
+.skd-note {
+  margin: 0 24px 20px;
+  padding: 16px;
+}
+
+.skd-note p {
+  margin: 0;
+  color: var(--muted-strong);
+  line-height: 1.6;
+}
+
+.skd-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0 24px 24px;
+  padding: 16px;
+}
+
+.skd-comparison h2 {
+  grid-column: 1 / -1;
+}
+
+.skd-comparison div {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 12px;
+}
+
+.skd-comparison span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.skd-comparison strong {
+  color: var(--text);
+  font-size: 1.35rem;
+}
+
+.skd-comparison p {
+  margin: 0;
+  color: var(--muted-strong);
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  .skd-workspace,
+  .skd-results,
+  .skd-form-grid,
+  .skd-date-grid,
+  .skd-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .skd-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .skd-workspace,
+  .skd-results,
+  .skd-note,
+  .skd-comparison,
+  .skd-header {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
