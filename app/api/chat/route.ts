@@ -25,6 +25,13 @@ import {
 } from "../../lib/knowledgeSearch";
 import { reactTools } from "../../lib/reactTools";
 import { supabase } from "../../lib/supabase";
+import {
+  checkRateLimit,
+  createOutputFilterTransform,
+  filterOutput,
+  INPUT_BLOCKED_MESSAGE,
+  validateInput,
+} from "../../lib/chatSecurity";
 
 export const maxDuration = 60;
 
@@ -809,6 +816,43 @@ function getMessageText(message: UIMessage): string {
     .join("");
 }
 
+function replaceLastUserText(
+  messages: UIMessage[],
+  sanitizedText: string,
+): UIMessage[] {
+  const lastUserIndex = messages.findLastIndex(
+    (message) => message.role === "user",
+  );
+
+  if (lastUserIndex === -1) {
+    return messages;
+  }
+
+  let textWasReplaced = false;
+
+  return messages.map((message, messageIndex) => {
+    if (messageIndex !== lastUserIndex) {
+      return message;
+    }
+
+    return {
+      ...message,
+      parts: message.parts.map((part) => {
+        if (part.type !== "text") {
+          return part;
+        }
+
+        if (textWasReplaced) {
+          return { ...part, text: "" };
+        }
+
+        textWasReplaced = true;
+        return { ...part, text: sanitizedText };
+      }),
+    };
+  });
+}
+
 function shouldPrioritizeKnowledgeSearch(text: string): boolean {
   return /(cen(a|y|ę|nik)|koszt|pakiet|ofert|usług|procedur|regulamin|faq|rezygn)/i.test(
     text,
@@ -1101,7 +1145,7 @@ function handleCommand(text: string) {
 }
 
 export async function POST(req: Request) {
-  const { image, messages, mode, model }: ChatRequestBody =
+  const { image, messages: rawMessages, mode, model }: ChatRequestBody =
     await req.json();
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -1118,6 +1162,29 @@ export async function POST(req: Request) {
   }
 
   const userId = user.id;
+  const rateLimit = checkRateLimit(userId);
+  if (!rateLimit.allowed) {
+    return createLocalUIMessageResponse(
+      `Osiągnąłeś limit wiadomości (50/h). Spróbuj za ${rateLimit.retryAfterMinutes} min.`,
+    );
+  }
+
+  if (!Array.isArray(rawMessages)) {
+    return createLocalUIMessageResponse(INPUT_BLOCKED_MESSAGE);
+  }
+
+  const rawLastUserMessage = [...rawMessages]
+    .reverse()
+    .find((message) => message.role === "user");
+  const inputValidation = validateInput(
+    rawLastUserMessage ? getMessageText(rawLastUserMessage) : "",
+  );
+
+  if (!inputValidation.ok) {
+    return createLocalUIMessageResponse(INPUT_BLOCKED_MESSAGE);
+  }
+
+  const messages = replaceLastUserText(rawMessages, inputValidation.value);
   const profileSupabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -1189,6 +1256,15 @@ export async function POST(req: Request) {
       };
 
       const result = streamText({
+        experimental_transform:
+          createOutputFilterTransform<typeof requestAgentTools>([
+            systemPrompts.agent,
+            analyzerInstructions,
+            webInstructions,
+            knowledgeInstructions,
+            generalToolsInstructions,
+            responseFormatInstructions,
+          ]),
         maxOutputTokens: selectedModel === "pro" ? 2600 : 1900,
         maxRetries: 0,
         messages: await createModelMessages(
@@ -1295,7 +1371,16 @@ ${responseLength}`,
       );
     }
 
-    return createLocalUIMessageResponse(appendSources(result.text, result.sources));
+    return createLocalUIMessageResponse(
+      filterOutput(appendSources(result.text, result.sources), [
+        systemPrompts[selectedMode],
+        stabilityInstructions,
+        modeWebInstructions,
+        knowledgeInstructions,
+        generalToolsInstructions,
+        responseFormatInstructions,
+      ]),
+    );
   } catch (error) {
     return createLocalUIMessageResponse(
       getModelErrorMessage(error, selectedModel),
