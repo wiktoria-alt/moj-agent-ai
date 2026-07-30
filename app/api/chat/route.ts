@@ -28,6 +28,7 @@ import {
   searchKnowledgeBase,
   type KnowledgeSearchResponse,
 } from "../../lib/knowledgeSearch";
+import { logMessage } from "../../lib/messageLogs";
 import { reactTools } from "../../lib/reactTools";
 import { supabase } from "../../lib/supabase";
 import {
@@ -35,6 +36,7 @@ import {
   createOutputFilterTransform,
   filterOutput,
   INPUT_BLOCKED_MESSAGE,
+  OUTPUT_BLOCKED_MESSAGE,
   validateInput,
 } from "../../lib/chatSecurity";
 
@@ -1167,8 +1169,24 @@ export async function POST(req: Request) {
   }
 
   const userId = user.id;
+  const profileSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const rawLastUserMessage = Array.isArray(rawMessages)
+    ? [...rawMessages].reverse().find((message) => message.role === "user")
+    : null;
+  const rawLastUserText = rawLastUserMessage
+    ? getMessageText(rawLastUserMessage)
+    : "";
   const rateLimit = checkRateLimit(userId);
   if (!rateLimit.allowed) {
+    await logMessage(profileSupabase, {
+      blockReason: "rate-limit-50-h",
+      blocked: true,
+      message: rawLastUserText,
+      userId,
+    });
+
     return createLocalUIMessageResponse(
       `Osiągnąłeś limit wiadomości (50/h). Spróbuj za ${rateLimit.retryAfterMinutes} min.`,
     );
@@ -1178,21 +1196,26 @@ export async function POST(req: Request) {
     return createLocalUIMessageResponse(INPUT_BLOCKED_MESSAGE);
   }
 
-  const rawLastUserMessage = [...rawMessages]
-    .reverse()
-    .find((message) => message.role === "user");
-  const inputValidation = validateInput(
-    rawLastUserMessage ? getMessageText(rawLastUserMessage) : "",
-  );
+  const inputValidation = validateInput(rawLastUserText);
 
   if (!inputValidation.ok) {
+    await logMessage(profileSupabase, {
+      blockReason: inputValidation.reason,
+      blocked: true,
+      message: rawLastUserText,
+      userId,
+    });
+
     return createLocalUIMessageResponse(INPUT_BLOCKED_MESSAGE);
   }
 
-  const messages = replaceLastUserText(rawMessages, inputValidation.value);
-  const profileSupabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
+  await logMessage(profileSupabase, {
+    blocked: false,
+    message: inputValidation.value,
+    userId,
   });
+
+  const messages = replaceLastUserText(rawMessages, inputValidation.value);
   const parsedImage = parseImageDataUrl(image);
   const selectedMode = getMode(mode);
   const selectedModel = getAiModel(model);
@@ -1394,16 +1417,25 @@ ${responseLength}`,
       );
     }
 
-    return createLocalUIMessageResponse(
-      filterOutput(appendSources(result.text, result.sources), [
-        systemPrompts[selectedMode],
-        stabilityInstructions,
-        modeWebInstructions,
-        knowledgeInstructions,
-        generalToolsInstructions,
-        responseFormatInstructions,
-      ]),
-    );
+    const filteredText = filterOutput(appendSources(result.text, result.sources), [
+      systemPrompts[selectedMode],
+      stabilityInstructions,
+      modeWebInstructions,
+      knowledgeInstructions,
+      generalToolsInstructions,
+      responseFormatInstructions,
+    ]);
+
+    if (filteredText === OUTPUT_BLOCKED_MESSAGE) {
+      await logMessage(profileSupabase, {
+        blockReason: "output-filter",
+        blocked: true,
+        message: lastUserText,
+        userId,
+      });
+    }
+
+    return createLocalUIMessageResponse(filteredText);
   } catch (error) {
     return createLocalUIMessageResponse(
       getModelErrorMessage(error, selectedModel),
