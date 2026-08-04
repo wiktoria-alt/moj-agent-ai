@@ -6,7 +6,6 @@ import { LandingPage } from "./components/LandingPage";
 import { supabase } from "./lib/supabase";
 
 export default function HomePage() {
-  const [isLoading, setIsLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
@@ -15,13 +14,11 @@ export default function HomePage() {
     void supabase.auth.getUser().then(({ data }) => {
       if (!active) return;
       setIsSignedIn(Boolean(data.user));
-      setIsLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
       setIsSignedIn(Boolean(session?.user));
-      setIsLoading(false);
     });
 
     return () => {
@@ -29,10 +26,6 @@ export default function HomePage() {
       listener.subscription.unsubscribe();
     };
   }, []);
-
-  if (isLoading) {
-    return <main className="landing-loading" aria-label="Ładowanie strony" />;
-  }
 
   return isSignedIn ? <Dashboard /> : <LandingPage />;
 }
