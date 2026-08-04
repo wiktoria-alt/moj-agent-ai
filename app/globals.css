@@ -1,32 +1,4 @@
 :root {
-  color-scheme: dark;
-  --bg: #090c17;
-  --bg-soft: #111827;
-  --surface: #101827;
-  --surface-muted: #0f172a;
-  --line: #263248;
-  --line-strong: #334155;
-  --text: #f8fafc;
-  --muted: #94a3b8;
-  --muted-strong: #cbd5e1;
-  --blue: #3b82f6;
-  --blue-dark: #2563eb;
-  --blue-soft: #172554;
-  --green: #16a34a;
-  --danger: #dc2626;
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.2);
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-[data-theme="light"] {
   color-scheme: light;
   --bg: #f8fafc;
   --bg-soft: #f3f4f6;
@@ -37,9 +9,37 @@
   --text: #111827;
   --muted: #6b7280;
   --muted-strong: #374151;
+  --blue: #3b82f6;
+  --blue-dark: #2563eb;
   --blue-soft: #eff6ff;
+  --green: #16a34a;
+  --danger: #dc2626;
   --shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
   --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.07);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #090c17;
+  --bg-soft: #111827;
+  --surface: #101827;
+  --surface-muted: #0f172a;
+  --line: #263248;
+  --line-strong: #334155;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --muted-strong: #cbd5e1;
+  --blue-soft: #172554;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 /* Lekcja 10 W4: panel bezpieczenstwa */
@@ -412,6 +412,20 @@ body {
 [data-theme="light"] .theme-toggle { border-color: #d1d5db; background: #ffffff; color: #111827; }
 [data-theme="dark"] .chat-panel,
 [data-theme="dark"] .document-card,
+[data-theme="dark"] .think-panel,
+[data-theme="dark"] .search-panel,
+[data-theme="dark"] .generate-panel,
+[data-theme="dark"] .vision-panel,
+[data-theme="dark"] .agent-power-panel,
+[data-theme="dark"] .extract-panel,
+[data-theme="dark"] .react-panel,
+[data-theme="dark"] .travel-panel,
+[data-theme="dark"] .report-panel,
+[data-theme="dark"] .competitor-panel,
+[data-theme="dark"] .meal-panel,
+[data-theme="dark"] .briefings-panel,
+[data-theme="dark"] .skd-panel,
+[data-theme="dark"] .email-triage-panel,
 [data-theme="dark"] .saved-reports-panel,
 [data-theme="dark"] .saved-report-preview,
 [data-theme="dark"] .report-shell .chat-panel,
@@ -419,6 +433,38 @@ body {
 [data-theme="dark"] .meal-shell .chat-panel {
   border-color: #263248;
   background: #101827;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .chat-header,
+[data-theme="dark"] .memory-panel,
+[data-theme="dark"] .composer,
+[data-theme="dark"] .diagnostics-panel,
+[data-theme="dark"] .report-actions,
+[data-theme="dark"] .competitor-actions,
+[data-theme="dark"] .meal-actions,
+[data-theme="dark"] .email-triage-actions,
+[data-theme="dark"] .briefing-detail-actions,
+[data-theme="dark"] .history-detail-actions,
+[data-theme="dark"] .react-scenario-panel,
+[data-theme="dark"] .travel-scenario-panel,
+[data-theme="dark"] .vision-context-panel,
+[data-theme="dark"] .vision-model-panel,
+[data-theme="dark"] .agent-tools-panel,
+[data-theme="dark"] .agent-command-panel,
+[data-theme="dark"] .report-form,
+[data-theme="dark"] .competitor-form,
+[data-theme="dark"] .meal-form,
+[data-theme="dark"] .briefing-form,
+[data-theme="dark"] .email-triage-form,
+[data-theme="dark"] .saved-reports-header,
+[data-theme="dark"] .saved-reports-list,
+[data-theme="dark"] .report-result,
+[data-theme="dark"] .competitor-result,
+[data-theme="dark"] .meal-result,
+[data-theme="dark"] .briefing-detail,
+[data-theme="dark"] .email-triage-result {
+  border-color: #263248;
+  background: #111827;
   color: #e2e8f0;
 }
 [data-theme="dark"] .messages,
@@ -433,6 +479,11 @@ body {
 }
 [data-theme="dark"] .empty-state,
 [data-theme="dark"] .document-file,
+[data-theme="dark"] .sample-questions button,
+[data-theme="dark"] .memory-stat,
+[data-theme="dark"] .diagnostics-alerts,
+[data-theme="dark"] .saved-reports-list button,
+[data-theme="dark"] .saved-reports-empty,
 [data-theme="dark"] .message.assistant,
 [data-theme="dark"] .report-message,
 [data-theme="dark"] .competitor-message,
@@ -445,6 +496,62 @@ body {
 [data-theme="dark"] .travel-messages .travel-message {
   border-color: #263248;
   background: #111827;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .chat-header h1,
+[data-theme="dark"] .chat-header h2,
+[data-theme="dark"] .agent-lockup h1,
+[data-theme="dark"] .agent-lockup h2,
+[data-theme="dark"] .diagnostics-header h2,
+[data-theme="dark"] .memory-toggle,
+[data-theme="dark"] .sample-questions button,
+[data-theme="dark"] .saved-reports-list button,
+[data-theme="dark"] .status-pill,
+[data-theme="dark"] .diagnostics-row,
+[data-theme="dark"] .diagnostics-panel p,
+[data-theme="dark"] .agent-description {
+  color: #e2e8f0;
+}
+[data-theme="dark"] .status-pill {
+  border-color: rgba(34, 197, 94, 0.32);
+  background: rgba(22, 101, 52, 0.26);
+  color: #bbf7d0;
+}
+[data-theme="dark"] .composer input,
+[data-theme="dark"] .composer textarea,
+[data-theme="dark"] .report-input-row input,
+[data-theme="dark"] .competitor-context textarea,
+[data-theme="dark"] .meal-input-row input,
+[data-theme="dark"] .briefing-input-row input,
+[data-theme="dark"] .email-triage-input-row textarea,
+[data-theme="dark"] .vision-composer textarea,
+[data-theme="dark"] .react-composer textarea,
+[data-theme="dark"] .travel-composer textarea {
+  border-color: #334155;
+  background: #0f172a;
+  color: #f8fafc;
+}
+[data-theme="dark"] .composer input::placeholder,
+[data-theme="dark"] .composer textarea::placeholder,
+[data-theme="dark"] .report-input-row input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+[data-theme="dark"] input::placeholder {
+  color: #64748b;
+}
+[data-theme="dark"] .report-actions button,
+[data-theme="dark"] .saved-reports-header button,
+[data-theme="dark"] .saved-report-preview button,
+[data-theme="dark"] .competitor-actions button,
+[data-theme="dark"] .meal-actions button,
+[data-theme="dark"] .email-triage-actions button,
+[data-theme="dark"] .briefing-detail-actions button,
+[data-theme="dark"] .history-detail-actions a,
+[data-theme="dark"] .react-scenario-panel button,
+[data-theme="dark"] .travel-scenario-panel button,
+[data-theme="dark"] .sidebar-actions button,
+[data-theme="dark"] .memory-actions button {
+  border-color: #334155;
+  background: #0f172a;
   color: #e2e8f0;
 }
 [data-theme="dark"] .markdown-message,
