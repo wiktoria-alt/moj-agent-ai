@@ -7125,3 +7125,98 @@ h2 {
   background: #f8fafc;
   color: #111827;
 }
+
+/* W4 theme normalization: navigation must not change between pages. */
+[data-theme="dark"] .top-nav,
+[data-theme="dark"] .think-nav,
+[data-theme="dark"] .dashboard-shell .top-nav,
+[data-theme="dark"] .knowledge-shell .top-nav,
+[data-theme="dark"] .history-shell .top-nav,
+[data-theme="dark"] .vision-course-panel .top-nav {
+  border-color: var(--theme-panel-border) !important;
+  background: #111827 !important;
+  color: var(--theme-panel-text) !important;
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.28);
+}
+
+[data-theme="light"] .top-nav,
+[data-theme="light"] .think-nav,
+[data-theme="light"] .dashboard-shell .top-nav,
+[data-theme="light"] .knowledge-shell .top-nav,
+[data-theme="light"] .history-shell .top-nav,
+[data-theme="light"] .vision-course-panel .top-nav {
+  border-color: var(--theme-panel-border) !important;
+  background: #ffffff !important;
+  color: var(--theme-panel-text) !important;
+  box-shadow: 0 20px 58px rgba(15, 23, 42, 0.11);
+}
+
+[data-theme="dark"] .top-nav a,
+[data-theme="dark"] .top-nav-links a,
+[data-theme="dark"] .nav-toggle,
+[data-theme="dark"] .logout-button,
+[data-theme="dark"] .top-nav .theme-toggle {
+  border-color: var(--theme-panel-border-strong) !important;
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .top-nav a,
+[data-theme="light"] .top-nav-links a,
+[data-theme="light"] .nav-toggle,
+[data-theme="light"] .logout-button,
+[data-theme="light"] .top-nav .theme-toggle {
+  border-color: var(--theme-panel-border) !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+[data-theme="dark"] .top-nav a.active,
+[data-theme="dark"] .top-nav a:hover,
+[data-theme="dark"] .top-nav a.primary.active,
+[data-theme="dark"] .top-nav a.primary:hover,
+[data-theme="dark"] .top-nav .theme-toggle:hover {
+  border-color: rgba(139, 92, 246, 0.58) !important;
+  background: #6d4ad0 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .top-nav a.active,
+[data-theme="light"] .top-nav a:hover,
+[data-theme="light"] .top-nav a.primary.active,
+[data-theme="light"] .top-nav a.primary:hover,
+[data-theme="light"] .top-nav .theme-toggle:hover {
+  border-color: rgba(59, 130, 246, 0.35) !important;
+  background: var(--blue) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .top-nav a.nav-brand,
+[data-theme="dark"] .top-nav a.nav-brand:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="light"] .top-nav a.nav-brand,
+[data-theme="light"] .top-nav a.nav-brand:hover {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #111827 !important;
+}
+
+[data-theme="dark"] .nav-brand-copy small {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .nav-brand-copy small {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] :is(.message.user, [class$="-message"].user, [class*="-message "].user) :is(strong, b) {
+  color: #ffffff;
+}
+
+[data-theme="light"] :is(.message.user, [class$="-message"].user, [class*="-message "].user) :is(strong, b) {
+  color: #ffffff;
+}
