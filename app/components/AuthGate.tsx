@@ -7,10 +7,11 @@ import { supabase } from "../lib/supabase";
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [ready, setReady] = useState(pathname === "/login");
+  const isPublicPage = pathname === "/" || pathname === "/login";
+  const [ready, setReady] = useState(isPublicPage);
 
   useEffect(() => {
-    if (pathname === "/login") {
+    if (isPublicPage) {
       setReady(true);
       return;
     }
@@ -21,7 +22,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       else setReady(true);
     });
     return () => { active = false; };
-  }, [pathname, router]);
+  }, [isPublicPage, router]);
 
   if (!ready) return <main className="history-page-loading"><p>Sprawdzam logowanie...</p></main>;
   return <>{children}</>;
