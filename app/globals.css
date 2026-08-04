@@ -410,6 +410,68 @@ body {
 [data-theme="light"] .landing-final-cta { border-color: #ddd6fe; background: radial-gradient(circle at 50% 0,#ddd6fe,transparent 72%),#ffffff; }
 [data-theme="light"] .landing-final-cta p { color: #6d28d9; }
 [data-theme="light"] .theme-toggle { border-color: #d1d5db; background: #ffffff; color: #111827; }
+[data-theme="dark"] .chat-panel,
+[data-theme="dark"] .document-card,
+[data-theme="dark"] .saved-reports-panel,
+[data-theme="dark"] .saved-report-preview,
+[data-theme="dark"] .report-shell .chat-panel,
+[data-theme="dark"] .competitor-shell .chat-panel,
+[data-theme="dark"] .meal-shell .chat-panel {
+  border-color: #263248;
+  background: #101827;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .messages,
+[data-theme="dark"] .report-result,
+[data-theme="dark"] .saved-reports-grid,
+[data-theme="dark"] .react-messages,
+[data-theme="dark"] .travel-messages,
+[data-theme="dark"] .agent-messages,
+[data-theme="dark"] .vision-messages,
+[data-theme="dark"] .vision-course-messages {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), #0b1120 42%);
+}
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .document-file,
+[data-theme="dark"] .message.assistant,
+[data-theme="dark"] .report-message,
+[data-theme="dark"] .competitor-message,
+[data-theme="dark"] .meal-message,
+[data-theme="dark"] .history-message.assistant,
+[data-theme="dark"] .vision-messages .message,
+[data-theme="dark"] .vision-course-messages .message.assistant,
+[data-theme="dark"] .agent-messages .message.assistant,
+[data-theme="dark"] .react-messages .react-message,
+[data-theme="dark"] .travel-messages .travel-message {
+  border-color: #263248;
+  background: #111827;
+  color: #e2e8f0;
+}
+[data-theme="dark"] .markdown-message,
+[data-theme="dark"] .markdown-message h1,
+[data-theme="dark"] .markdown-message h2,
+[data-theme="dark"] .markdown-message h3,
+[data-theme="dark"] .report-message.assistant,
+[data-theme="dark"] .report-message.assistant h1,
+[data-theme="dark"] .report-message.assistant h2,
+[data-theme="dark"] .report-message.assistant h3,
+[data-theme="dark"] .competitor-message.assistant,
+[data-theme="dark"] .meal-message.assistant {
+  color: #e2e8f0;
+}
+[data-theme="dark"] .markdown-message th,
+[data-theme="dark"] .report-message.assistant th,
+[data-theme="dark"] .competitor-message.assistant th,
+[data-theme="dark"] .meal-message.assistant th {
+  background: #172554;
+  color: #dbeafe;
+}
+[data-theme="dark"] .markdown-message td,
+[data-theme="dark"] .report-message.assistant td,
+[data-theme="dark"] .competitor-message.assistant td,
+[data-theme="dark"] .meal-message.assistant td {
+  border-color: #263248;
+}
 @keyframes landingIn { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
 @media (max-width: 760px) { .landing-nav,.landing-hero,.landing-demo,.landing-features,.landing-final-cta,.landing-footer { width:min(100% - 28px,1120px); }.landing-hero { padding: 64px 0 53px; }.landing-features { grid-template-columns: 1fr 1fr; padding: 45px 0; }.demo-body { grid-template-columns: 1fr; }.demo-body aside { display:none; }.demo-body article { padding: 28px 19px 20px; }.landing-footer { gap: 9px; flex-direction: column; text-align:center; }.demo-topbar p { display:none; margin-left: auto; } }
 @media (max-width: 430px) { .landing-features { grid-template-columns:1fr; }.landing-actions { flex-direction:column; }.landing-primary { width:100%; }.landing-hero h1 { font-size:2.72rem; } }
