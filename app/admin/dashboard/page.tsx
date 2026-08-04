@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TopNavigation } from "../../components/TopNavigation";
 import { supabase } from "../../lib/supabase";
 
 type DashboardData = {
@@ -17,6 +16,22 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 const shortDate = new Intl.DateTimeFormat("pl-PL", { weekday: "short" });
 const fullDate = new Intl.DateTimeFormat("pl-PL", { dateStyle: "short", timeStyle: "short" });
 const pieColors = ["#8b5cf6", "#38bdf8", "#22c55e", "#f59e0b", "#f43f5e", "#64748b"];
+
+function UsageNav() {
+  return <nav className="usage-nav" aria-label="Nawigacja admina">
+    <a className="usage-nav-brand" href="/">
+      <span aria-hidden="true">⚡</span>
+      <strong>Agent AI</strong>
+    </a>
+    <div>
+      <a href="/">Dashboard</a>
+      <a href="/chat">Chat</a>
+      <a href="/history">Historia</a>
+      <a aria-current="page" href="/admin/dashboard">Użycie</a>
+      <button onClick={() => void supabase.auth.signOut().then(() => { window.location.href = "/login"; })} type="button">Wyloguj</button>
+    </div>
+  </nav>;
+}
 
 function LineChart({ values }: { values: DashboardData["days"] }) {
   const maximum = Math.max(...values.map((item) => item.tokens), 1);
@@ -55,7 +70,7 @@ export default function UsageDashboardPage() {
   }, []);
 
   return <main className="usage-shell">
-    <TopNavigation />
+    <UsageNav />
     <section className="usage-heading"><div><p>ADMIN · ANALITYKA</p><h1>📊 Dashboard użycia</h1><span>Rozmowy, użytkownicy, tokeny i szacowane koszty agenta.</span></div><div className="usage-live"><i /> Dane na żywo</div></section>
     {error && <p className="usage-error">{error}</p>}
     {!data && !error && <section className="usage-loading"><span /><p>Pobieram statystyki…</p></section>}

@@ -37,7 +37,7 @@
   padding: 24px 24px 44px;
 }
 
-.usage-shell > .top-nav,
+.usage-nav,
 .usage-heading,
 .usage-stats,
 .usage-grid,
@@ -48,10 +48,12 @@
   margin-inline: auto;
 }
 
-.usage-shell .top-nav a.nav-brand { color: #fff; }
-.usage-shell .nav-brand-copy small { color: #94a3b8; }
-.usage-shell .top-nav a { border-color: rgba(148,163,184,.2); background: rgba(15,23,42,.65); color: #cbd5e1; }
-.usage-shell .top-nav a:hover,.usage-shell .top-nav a.active { border-color: rgba(139,92,246,.55); background: #6d4ad0; color: #fff; }
+.usage-nav { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:16px; border:1px solid rgba(148,163,184,.16); border-radius:14px; background:rgba(15,23,42,.72); padding:10px 12px; box-shadow:0 20px 60px rgba(0,0,0,.18); backdrop-filter:blur(18px); }
+.usage-nav a,.usage-nav button { min-height:38px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(148,163,184,.2); border-radius:10px; background:rgba(15,23,42,.65); color:#cbd5e1; padding:0 13px; font:inherit; font-size:.82rem; font-weight:900; text-decoration:none; cursor:pointer; }
+.usage-nav a:hover,.usage-nav a[aria-current="page"],.usage-nav button:hover { border-color:rgba(139,92,246,.55); background:#6d4ad0; color:#fff; transform:translateY(-1px); }
+.usage-nav-brand { gap:9px; border-color:transparent !important; background:transparent !important; color:#fff !important; padding-left:6px !important; }
+.usage-nav-brand span { width:34px; height:34px; display:grid; place-items:center; border-radius:9px; background:#1e1b4b; color:#fff; }
+.usage-nav > div { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
 .usage-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 42px 0 22px; }
 .usage-heading p,.usage-heading h1,.usage-heading span { margin: 0; }
 .usage-heading p,.usage-card header p { color: #a78bfa; font-size: .72rem; font-weight: 900; letter-spacing: .12em; }
@@ -74,9 +76,8 @@
 .usage-table-wrap { overflow-x:auto; }.usage-table-card table { width:100%; border-collapse:collapse; min-width:720px; }.usage-table-card th,.usage-table-card td { border-top:1px solid rgba(148,163,184,.13); padding:13px 20px; text-align:left; }.usage-table-card th { color:#64748b; background:rgba(2,6,23,.22); font-size:.69rem; text-transform:uppercase; }.usage-table-card td { color:#94a3b8; font-size:.8rem; }.usage-table-card td b { color:#e2e8f0; }.usage-message-count { display:inline-grid; min-width:28px; height:25px; place-items:center; border-radius:8px; background:#272043; color:#c4b5fd; font-weight:900; }
 .usage-pricing { color:#536178; padding-top:13px; font-size:.7rem; text-align:right; }.usage-error { border:1px solid rgba(248,113,113,.3); border-radius:12px; background:rgba(127,29,29,.3); color:#fecaca; padding:15px; font-weight:800; }.usage-loading { min-height:320px; display:grid; place-content:center; gap:14px; color:#94a3b8; text-align:center; }.usage-loading span { width:34px; height:34px; justify-self:center; border:3px solid #334155; border-top-color:#8b5cf6; border-radius:50%; animation:usageSpin .8s linear infinite; }.usage-loading p { margin:0; }
 @keyframes usageSpin { to { transform:rotate(360deg); } }
-@media (min-width:1180px) { .usage-shell { padding-left:264px; }.usage-shell > .top-nav { width:220px; margin-inline:0; } }
 @media (max-width:850px) { .usage-stats { grid-template-columns:1fr 1fr; }.usage-grid { grid-template-columns:1fr; }.usage-wide,.usage-table-card { grid-column:auto; }.usage-heading { align-items:flex-start; flex-direction:column; }.usage-pie-layout { grid-template-columns:140px 1fr; }.usage-pie { width:136px; height:136px; } }
-@media (max-width:520px) { .usage-shell { padding:16px 14px 32px; }.usage-stats { grid-template-columns:1fr; }.usage-heading { padding-top:28px; }.usage-pie-layout { grid-template-columns:1fr; justify-items:center; }.usage-legend { width:100%; }.usage-card { padding:16px; }.usage-table-card { padding:0; } }
+@media (max-width:520px) { .usage-shell { padding:16px 14px 32px; }.usage-nav { align-items:stretch; flex-direction:column; }.usage-nav > div,.usage-nav a,.usage-nav button { width:100%; }.usage-stats { grid-template-columns:1fr; }.usage-heading { padding-top:28px; }.usage-pie-layout { grid-template-columns:1fr; justify-items:center; }.usage-legend { width:100%; }.usage-card { padding:16px; }.usage-table-card { padding:0; } }
 
 .security-shell {
   align-items: stretch;
