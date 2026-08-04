@@ -6850,3 +6850,278 @@ h2 {
     padding-right: 16px;
   }
 }
+
+/* W4 theme normalization: every app panel follows the active theme. */
+[data-theme="dark"] {
+  --theme-page-bg: #090c17;
+  --theme-panel-bg: #101827;
+  --theme-panel-bg-strong: #111827;
+  --theme-panel-muted: #0f172a;
+  --theme-panel-border: #263248;
+  --theme-panel-border-strong: #334155;
+  --theme-panel-text: #f8fafc;
+  --theme-panel-muted-text: #94a3b8;
+}
+
+[data-theme="light"] {
+  --theme-page-bg: #f8fafc;
+  --theme-panel-bg: #ffffff;
+  --theme-panel-bg-strong: #ffffff;
+  --theme-panel-muted: #f8fafc;
+  --theme-panel-border: #e5e7eb;
+  --theme-panel-border-strong: #d1d5db;
+  --theme-panel-text: #111827;
+  --theme-panel-muted-text: #64748b;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] [class$="-shell"],
+[data-theme="dark"] [class*="-shell "] {
+  background: var(--theme-page-bg);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="light"] body,
+[data-theme="light"] [class$="-shell"],
+[data-theme="light"] [class*="-shell "] {
+  background: var(--theme-page-bg);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="dark"] :is(
+  .chat-panel,
+  .chat-header,
+  .messages,
+  .memory-panel,
+  .composer,
+  .diagnostics-panel,
+  .document-card,
+  .document-file,
+  .empty-state,
+  [class$="-panel"],
+  [class*="-panel "],
+  [class$="-card"],
+  [class*="-card "],
+  [class$="-form"],
+  [class*="-form "],
+  [class$="-result"],
+  [class*="-result "],
+  [class$="-actions"],
+  [class*="-actions "],
+  [class$="-preview"],
+  [class*="-preview "],
+  [class$="-empty"],
+  [class*="-empty "],
+  [class$="-note"],
+  [class*="-note "],
+  [class$="-comparison"],
+  [class*="-comparison "],
+  [class$="-list"],
+  [class*="-list "]
+) {
+  border-color: var(--theme-panel-border);
+  background: var(--theme-panel-bg);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="light"] :is(
+  .chat-panel,
+  .chat-header,
+  .messages,
+  .memory-panel,
+  .composer,
+  .diagnostics-panel,
+  .document-card,
+  .document-file,
+  .empty-state,
+  [class$="-panel"],
+  [class*="-panel "],
+  [class$="-card"],
+  [class*="-card "],
+  [class$="-form"],
+  [class*="-form "],
+  [class$="-result"],
+  [class*="-result "],
+  [class$="-actions"],
+  [class*="-actions "],
+  [class$="-preview"],
+  [class*="-preview "],
+  [class$="-empty"],
+  [class*="-empty "],
+  [class$="-note"],
+  [class*="-note "],
+  [class$="-comparison"],
+  [class*="-comparison "],
+  [class$="-list"],
+  [class*="-list "]
+) {
+  border-color: var(--theme-panel-border);
+  background: var(--theme-panel-bg);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="dark"] :is(
+  .message.assistant,
+  .markdown-message,
+  [class$="-message"]:not(.user),
+  [class*="-message "]:not(.user),
+  [class$="-row"],
+  [class*="-row "],
+  [class$="-item"],
+  [class*="-item "]
+) {
+  border-color: var(--theme-panel-border);
+  background: var(--theme-panel-bg-strong);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="light"] :is(
+  .message.assistant,
+  .markdown-message,
+  [class$="-message"]:not(.user),
+  [class*="-message "]:not(.user),
+  [class$="-row"],
+  [class*="-row "],
+  [class$="-item"],
+  [class*="-item "]
+) {
+  border-color: var(--theme-panel-border);
+  background: var(--theme-panel-bg-strong);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="dark"] :is(
+  h1,
+  h2,
+  h3,
+  .chat-header h1,
+  .chat-header h2,
+  .markdown-message h1,
+  .markdown-message h2,
+  .markdown-message h3,
+  [class$="-panel"] h1,
+  [class$="-panel"] h2,
+  [class$="-panel"] h3,
+  [class*="-panel "] h1,
+  [class*="-panel "] h2,
+  [class*="-panel "] h3,
+  [class$="-card"] h1,
+  [class$="-card"] h2,
+  [class$="-card"] h3,
+  [class*="-card "] h1,
+  [class*="-card "] h2,
+  [class*="-card "] h3,
+  strong,
+  b
+) {
+  color: var(--theme-panel-text);
+}
+
+[data-theme="light"] :is(
+  h1,
+  h2,
+  h3,
+  .chat-header h1,
+  .chat-header h2,
+  .markdown-message h1,
+  .markdown-message h2,
+  .markdown-message h3,
+  [class$="-panel"] h1,
+  [class$="-panel"] h2,
+  [class$="-panel"] h3,
+  [class*="-panel "] h1,
+  [class*="-panel "] h2,
+  [class*="-panel "] h3,
+  [class$="-card"] h1,
+  [class$="-card"] h2,
+  [class$="-card"] h3,
+  [class*="-card "] h1,
+  [class*="-card "] h2,
+  [class*="-card "] h3,
+  strong,
+  b
+) {
+  color: var(--theme-panel-text);
+}
+
+[data-theme="dark"] :is(
+  input,
+  textarea,
+  select
+) {
+  border-color: var(--theme-panel-border-strong);
+  background: var(--theme-panel-muted);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="light"] :is(
+  input,
+  textarea,
+  select
+) {
+  border-color: var(--theme-panel-border-strong);
+  background: #ffffff;
+  color: var(--theme-panel-text);
+}
+
+[data-theme="dark"] :is(input, textarea)::placeholder {
+  color: #64748b;
+}
+
+[data-theme="light"] :is(input, textarea)::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] :is(
+  button,
+  .attach-button,
+  .sample-questions button,
+  .memory-actions button,
+  .sidebar-actions button,
+  [class$="-actions"] button,
+  [class*="-actions "] button
+):not(.landing-primary):not([type="submit"]) {
+  border-color: var(--theme-panel-border-strong);
+  background: var(--theme-panel-muted);
+  color: var(--theme-panel-text);
+}
+
+[data-theme="light"] :is(
+  button,
+  .attach-button,
+  .sample-questions button,
+  .memory-actions button,
+  .sidebar-actions button,
+  [class$="-actions"] button,
+  [class*="-actions "] button
+):not(.landing-primary):not([type="submit"]) {
+  border-color: var(--theme-panel-border);
+  background: #ffffff;
+  color: #111827;
+}
+
+[data-theme="dark"] :is(.message.user, [class$="-message"].user, [class*="-message "].user) {
+  border-color: rgba(59, 130, 246, 0.26);
+  background: var(--blue);
+  color: #ffffff;
+}
+
+[data-theme="light"] :is(.message.user, [class$="-message"].user, [class*="-message "].user) {
+  border-color: rgba(59, 130, 246, 0.2);
+  background: var(--blue);
+  color: #ffffff;
+}
+
+[data-theme="dark"] :is(table, thead, tbody, tr, td, th) {
+  border-color: var(--theme-panel-border);
+}
+
+[data-theme="dark"] th {
+  background: #172554;
+  color: #dbeafe;
+}
+
+[data-theme="light"] th {
+  background: #f8fafc;
+  color: #111827;
+}
