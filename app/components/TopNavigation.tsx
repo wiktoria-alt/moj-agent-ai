@@ -33,6 +33,7 @@ const links: NavLink[] = [
   { href: "/briefings", label: "📰 Briefingi" },
   { href: "/skd-calculator", label: "⚖️ Kalkulator SKD" },
   { href: "/admin/security", label: "Bezpieczeństwo", match: ["/admin/security"] },
+  { href: "/admin/dashboard", label: "📊 Użycie", match: ["/admin/dashboard"] },
 ];
 
 type TopNavigationProps = {
