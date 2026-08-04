@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { ThemeToggle } from "./ThemeToggle";
 
 type NavLink = {
   href: string;
@@ -98,6 +99,7 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
             </a>
           );
         })}
+        <ThemeToggle />
         <button
           className="logout-button"
           onClick={() =>

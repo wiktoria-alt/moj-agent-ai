@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import { supabase } from "../../lib/supabase";
 
 type DashboardData = {
@@ -28,6 +29,7 @@ function UsageNav() {
       <a href="/chat">Chat</a>
       <a href="/history">Historia</a>
       <a aria-current="page" href="/admin/dashboard">Użycie</a>
+      <ThemeToggle />
       <button onClick={() => void supabase.auth.signOut().then(() => { window.location.href = "/login"; })} type="button">Wyloguj</button>
     </div>
   </nav>;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "./ThemeToggle";
 
 const features = [
   { icon: "🧠", title: "Pamięta rozmowy", text: "Wraca do ważnych ustaleń, kontekstu i Twojego stylu pracy." },
@@ -18,13 +19,16 @@ export function LandingPage() {
           <span aria-hidden="true">✦</span>
           <strong>Agent AI</strong>
         </Link>
-        <Link className="landing-login" href="/login">Zaloguj się</Link>
+        <div className="landing-nav-actions">
+          <ThemeToggle />
+          <Link className="landing-login" href="/login">Zaloguj się</Link>
+        </div>
       </nav>
 
       <section className="landing-hero">
         <p className="landing-badge"><span aria-hidden="true">✦</span> Twój inteligentny zespół w jednym miejscu</p>
         <h1>Agent, który zamienia <em>wiedzę</em> w działanie.</h1>
-        <p className="landing-lead">Agent AI zna dokumenty Twojej firmy, pamięta kontekst rozmów i pomaga podejmować trafniejsze decyzje — każdego dnia.</p>
+        <p className="landing-lead">Agent AI zna dokumenty Twojej firmy, pamięta kontekst rozmów i pomaga podejmować trafniejsze decyzje - każdego dnia.</p>
         <div className="landing-actions">
           <Link className="landing-primary" href="/login">Zacznij za darmo <span aria-hidden="true">→</span></Link>
           <a className="landing-secondary" href="#demo">Zobacz, jak działa <span aria-hidden="true">↓</span></a>
@@ -43,7 +47,7 @@ export function LandingPage() {
             <h2>Dzień dobry, Wiktoria 👋</h2>
             <div className="demo-question">Jak wygląda nasz aktualny cennik?</div>
             <div className="demo-answer"><span>✦</span><p>Znalazłem odpowiedź w dokumencie <b>„Cennik 2026”</b>. Pakiet Pro kosztuje <b>249 zł miesięcznie</b> i obejmuje pełny dostęp dla 10 osób.<br /><a href="#demo">Zobacz źródło ↗</a></p></div>
-            <div className="demo-input">Zapytaj o wszystko… <b>↑</b></div>
+            <div className="demo-input">Zapytaj o wszystko... <b>↑</b></div>
           </article>
         </div>
       </section>
