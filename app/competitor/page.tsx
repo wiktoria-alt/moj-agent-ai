@@ -35,6 +35,29 @@ const examples = [
   },
 ] as const;
 
+const skdExamples = [
+  {
+    companies: ["Alior Bank", "Santander", "PKO BP"],
+    context: "Porównuję komunikację banków i dokumenty kredytu konsumenckiego pod kątem ryzyk SKD.",
+    label: "Alior vs Santander vs PKO BP",
+  },
+  {
+    companies: ["mBank", "ING", "BNP Paribas"],
+    context: "Chcę porównać, jak banki opisują koszty kredytu i wcześniejszą spłatę.",
+    label: "mBank vs ING vs BNP Paribas",
+  },
+  {
+    companies: ["UOKiK", "Rzecznik Finansowy", "Sąd Najwyższy"],
+    context: "Porównuję źródła wiedzy przy analizie sankcji kredytu darmowego.",
+    label: "UOKiK vs RF vs SN",
+  },
+  {
+    companies: ["Kancelaria SKD", "Doradca finansowy", "Agent AI SKD"],
+    context: "Porównuję sposoby wstępnej analizy umowy kredytu konsumenckiego.",
+    label: "Kancelaria vs doradca vs agent",
+  },
+] as const;
+
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {
   return message.parts
     .filter((part) => part.type === "text")
@@ -115,7 +138,7 @@ export default function CompetitorPage() {
     void compareCompanies();
   }
 
-  function useExample(example: (typeof examples)[number]) {
+  function useExample(example: (typeof skdExamples)[number]) {
     setCompanies([...example.companies]);
     setContext(example.context);
     void compareCompanies([...example.companies], example.context);
@@ -164,10 +187,10 @@ export default function CompetitorPage() {
                   onChange={(event) => updateCompany(index, event.target.value)}
                   placeholder={
                     index === 0
-                      ? "Np. Shopify"
+                      ? "Np. Alior Bank"
                       : index === 1
-                        ? "Np. WooCommerce"
-                        : "Np. PrestaShop"
+                        ? "Np. Santander"
+                        : "Np. PKO BP"
                   }
                   value={companies[index]}
                 />
@@ -179,7 +202,7 @@ export default function CompetitorPage() {
             <span>Kontekst</span>
             <textarea
               onChange={(event) => setContext(event.target.value)}
-              placeholder="Np. Szukam platformy e-commerce dla małego sklepu..."
+              placeholder="Np. Porównuję komunikację banków pod kątem ryzyk SKD..."
               value={context}
             />
           </label>
@@ -190,7 +213,7 @@ export default function CompetitorPage() {
         </form>
 
         <div className="competitor-examples" aria-label="Przykładowe porównania">
-          {examples.map((example) => (
+          {skdExamples.map((example) => (
             <button
               disabled={isLoading}
               key={example.label}

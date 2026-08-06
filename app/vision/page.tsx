@@ -18,6 +18,14 @@ const visionQuestions = [
   "Wygeneruj podobny obraz w innym stylu",
 ] as const;
 
+const skdVisionQuestions = [
+  "Odczytaj tekst z dokumentu kredytowego.",
+  "Wskaż widoczne dane: kwota kredytu, prowizja, RRSO i daty.",
+  "Sprawdź, czy na screenie widać możliwe ryzyka SKD.",
+  "Wypisz brakujące dokumenty do analizy tej sprawy.",
+  "Przygotuj krótkie podsumowanie screena dla klienta.",
+] as const;
+
 type VisionMessage = {
   id: string;
   model?: AiModel;
@@ -323,7 +331,7 @@ export default function VisionPage() {
         </header>
 
         <div className="sample-questions vision-prompts" aria-label="Pytania o obraz">
-          {visionQuestions.map((question) => (
+          {skdVisionQuestions.map((question) => (
             <button
               disabled={isBusy}
               key={question}

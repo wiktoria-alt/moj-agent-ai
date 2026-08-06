@@ -13,12 +13,12 @@ const fewShotTransport = new DefaultChatTransport({
 });
 
 const sampleTerms = [
-  "Sztuczna inteligencja",
-  "Agent AI",
-  "Prompt",
-  "Halucynacja AI",
-  "RAG",
-  "API",
+  "Sankcja kredytu darmowego",
+  "Całkowity koszt kredytu",
+  "RRSO",
+  "Formularz informacyjny",
+  "Kredytowane koszty",
+  "Wcześniejsza spłata",
 ] as const;
 
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {

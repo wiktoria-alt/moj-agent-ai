@@ -22,6 +22,15 @@ const scenarios = [
   "Zaproponuj 6 punktów do zwiedzenia w Krakowie — interesuje mnie historia",
 ] as const;
 
+const skdScenarios = [
+  "Podróż służbowa do sądu w Warszawie na rozprawę SKD — zaplanuj dojazd i pogodę",
+  "Wyjazd do klienta w Krakowie po dokumenty kredytowe — plan dnia i pogoda",
+  "Spotkanie z klientem we Wrocławiu w sprawie umowy kredytu — plan logistyczny",
+  "Porównaj Warszawę i Poznań jako miejsce szkolenia o sankcji kredytu darmowego",
+  "Zaproponuj plan krótkiego wyjazdu na szkolenie SKD w Gdańsku",
+  "Podróż do kancelarii w Katowicach — sprawdź pogodę i zaproponuj harmonogram",
+] as const;
+
 const toolLabels: Record<string, { emoji: string; label: string }> = {
   calculator: { emoji: "🧮", label: "Przeliczenie" },
   getExchangeRate: { emoji: "💶", label: "Waluta" },
@@ -396,7 +405,7 @@ export default function TravelPage() {
 
         <section className="travel-workspace">
           <aside className="travel-scenario-panel" aria-label="Przykładowe podróże">
-            {scenarios.map((scenario) => (
+            {skdScenarios.map((scenario) => (
               <button
                 disabled={isLoading}
                 key={scenario}
@@ -467,7 +476,7 @@ export default function TravelPage() {
                 <input
                   aria-label="Plan podróży"
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Np. Lecę do Barcelony na weekend..."
+                  placeholder="Np. Jadę do klienta po dokumenty kredytowe..."
                   value={input}
                 />
                 <button disabled={!canSend} type="submit">

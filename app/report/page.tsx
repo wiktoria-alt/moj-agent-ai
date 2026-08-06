@@ -14,10 +14,10 @@ const reportTransport = new DefaultChatTransport({
 });
 
 const sampleTopics = [
-  "Rynek AI w Polsce - trendy, firmy, prognozy na 2026",
-  "Porównanie platform e-commerce: Shopify vs WooCommerce vs PrestaShop",
-  "Wpływ pracy zdalnej na produktywność - badania i statystyki",
-  "Rynek nieruchomości w Krakowie - ceny, trendy, prognozy",
+  "Raport: najczęstsze naruszenia informacyjne w umowach kredytu konsumenckiego",
+  "Raport: dokumenty potrzebne do wstępnej analizy sankcji kredytu darmowego",
+  "Raport: RRSO, prowizja i całkowity koszt kredytu — pola do weryfikacji",
+  "Raport: argumenty klienta i banku w sprawach SKD",
 ] as const;
 
 type StoredReport = {
@@ -236,7 +236,7 @@ export default function ReportPage() {
             <input
               id="report-topic"
               onChange={(event) => setTopic(event.target.value)}
-              placeholder="Np. Rynek AI w Polsce w 2026 roku..."
+              placeholder="Np. Najczęstsze naruszenia informacyjne w umowach kredytu..."
               value={topic}
             />
             <button disabled={!canSend} type="submit">

@@ -20,6 +20,13 @@ const scenarios = [
   "Ile dni do następnego święta w Polsce? Jaka będzie wtedy pogoda?",
 ] as const;
 
+const skdScenarios = [
+  "Sprawdź w Google aktualne informacje o SKD, potem zapisz krótką notatkę z najważniejszymi źródłami",
+  "Policz różnicę: suma rat 36 800 zł minus kapitał 29 500 zł, a wynik zapisz w notatkach",
+  "Znajdź informacje o UOKiK i kredycie konsumenckim, a potem wypisz 5 obowiązków kredytodawcy",
+  "Sprawdź datę dzisiejszą i zaproponuj checklistę dokumentów do sprawy SKD",
+] as const;
+
 const toolDetails: Record<string, { emoji: string; label: string }> = {
   calculator: { emoji: "🧮", label: "Kalkulator" },
   currentDateTime: { emoji: "🕐", label: "Data i czas" },
@@ -504,7 +511,7 @@ export default function ReactPage() {
 
         <section className="react-workspace">
           <aside className="react-scenario-panel" aria-label="Scenariusze ReAct">
-            {scenarios.map((scenario) => (
+            {skdScenarios.map((scenario) => (
               <button
                 disabled={isLoading}
                 key={scenario}
@@ -611,7 +618,7 @@ export default function ReactPage() {
                 <input
                   aria-label="Cel dla agenta ReAct"
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Opisz co chcesz osiągnąć..."
+                  placeholder="Opisz zadanie SKD, które agent ma przejść krok po kroku..."
                   value={input}
                 />
                 <button disabled={!canSend} type="submit">

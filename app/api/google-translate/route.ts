@@ -27,6 +27,16 @@ function getLanguage(value: unknown, fallback: LanguageCode): LanguageCode {
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.GOOGLE_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      return Response.json(
+        {
+          error:
+            "Brakuje klucza Google API. Dodaj GOOGLE_API_KEY albo GOOGLE_GENERATIVE_AI_API_KEY w Vercel.",
+        },
+        { status: 500 },
+      );
+    }
+
     const body = (await req.json()) as {
       source?: unknown;
       target?: unknown;

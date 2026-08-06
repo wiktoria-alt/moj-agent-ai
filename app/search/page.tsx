@@ -20,10 +20,10 @@ const searchTransport = new DefaultChatTransport({
 });
 
 const sampleSearchQuestions = [
-  "Jakie są najnowsze wiadomości o sztucznej inteligencji?",
-  "Ile kosztuje iPhone 16 Pro w Polsce?",
-  "Kto wygrał ostatni mecz reprezentacji Polski?",
-  "Jakie filmy są teraz w kinach?",
+  "Znajdź aktualne informacje o sankcji kredytu darmowego w Polsce.",
+  "Znajdź najnowsze orzeczenia dotyczące kredytu konsumenckiego i SKD.",
+  "Sprawdź, co UOKiK pisze o obowiązkach informacyjnych kredytodawcy.",
+  "Znajdź oficjalny tekst ustawy o kredycie konsumenckim.",
 ] as const;
 
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {

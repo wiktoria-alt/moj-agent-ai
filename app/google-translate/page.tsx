@@ -37,11 +37,15 @@ export default function GoogleTranslatePage() {
     setError("");
     setCopied(false);
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+
     try {
       const response = await fetch("/api/google-translate", {
         body: JSON.stringify({ source, target, text }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
+        signal: controller.signal,
       });
       const data = (await response.json()) as {
         error?: string;
@@ -55,11 +59,14 @@ export default function GoogleTranslatePage() {
       setTranslatedText(data.translatedText ?? "");
     } catch (translationError) {
       setError(
-        translationError instanceof Error
+        translationError instanceof DOMException && translationError.name === "AbortError"
+          ? "Tłumaczenie trwa za długo. Spróbuj krótszego tekstu albo odśwież stronę."
+          : translationError instanceof Error
           ? translationError.message
           : "Nie udało się przetłumaczyć tekstu.",
       );
     } finally {
+      window.clearTimeout(timeoutId);
       setIsLoading(false);
     }
   }

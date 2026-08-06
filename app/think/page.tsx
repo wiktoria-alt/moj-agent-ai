@@ -13,9 +13,9 @@ const thinkTransport = new DefaultChatTransport({
 });
 
 const sampleThinkQuestions = [
-  "Firma ma 120 pracowników. 40% to kobiety, 25% kobiet i 15% mężczyzn pracuje zdalnie. Ile osób pracuje zdalnie?",
-  "Mam ofertę: 12 000 zł brutto na UoP vs 15 000 zł netto na B2B. Co bardziej się opłaca?",
-  "Jak podejść krok po kroku do analizy kosztów kredytu?",
+  "Policz, ile klient może odzyskać: suma rat 42 300 zł minus kapitał 31 000 zł.",
+  "Ułóż krok po kroku analizę umowy kredytu pod sankcję kredytu darmowego.",
+  "Sprawdź logikę: kredyt 40 000 zł, prowizja 6 000 zł, kredytowana prowizja — jakie pola porównać?",
 ] as const;
 
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {

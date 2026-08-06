@@ -52,6 +52,14 @@ const scenarios = [
   "Wyszukaj w Google 'best coffee shops Kraków' i streszcz wyniki",
 ] as const;
 
+const skdScenarios = [
+  "Wyszukaj aktualne informacje o sankcji kredytu darmowego i streść najważniejsze punkty",
+  "Przeczytaj stronę UOKiK o kredycie konsumenckim i wypisz obowiązki kredytodawcy",
+  "Policz orientacyjną korzyść klienta: suma rat 58 400 zł minus kapitał 45 000 zł",
+  "Wygeneruj grafikę edukacyjną: 5 dokumentów potrzebnych do analizy SKD",
+  "Sprawdź w bazie wiedzy, jakie dokumenty klient powinien dosłać do analizy umowy",
+] as const;
+
 const toolDetails: Record<string, { emoji: string; label: string }> = {
   searchKnowledge: { emoji: "📚", label: "Baza wiedzy" },
   getWeather: { emoji: "🌤️", label: "Pogoda" },
@@ -514,7 +522,7 @@ export default function AgentPage() {
 
           <section className="agent-command-panel">
             <div className="agent-scenarios" aria-label="Scenariusze">
-              {scenarios.map((scenario) => (
+              {skdScenarios.map((scenario) => (
                 <button
                   disabled={isLoading}
                   key={scenario}
@@ -629,7 +637,7 @@ export default function AgentPage() {
                   aria-label="Zadanie dla agenta"
                   onChange={(event) => setInput(event.target.value)}
                   onPaste={handlePaste}
-                  placeholder="Zleć agentowi zadanie wielonarzędziowe..."
+                  placeholder="Zleć agentowi zadanie SKD, np. sprawdzenie ustawy, obliczenia albo dokumentów..."
                   value={input}
                 />
 

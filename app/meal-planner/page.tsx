@@ -33,6 +33,27 @@ const examples = [
   },
 ] as const;
 
+const skdExamples = [
+  {
+    budget: "150 PLN",
+    days: "3",
+    people: "1",
+    preferences: "Szybkie posiłki na dni intensywnej analizy umów SKD. Bez ryb, dużo energii, mało gotowania.",
+  },
+  {
+    budget: "300 PLN",
+    days: "5",
+    people: "2",
+    preferences: "Plan dla zespołu analizującego dokumenty kredytowe. Obiady do odgrzania, maksymalnie 30 minut.",
+  },
+  {
+    budget: "220 PLN",
+    days: "5",
+    people: "1",
+    preferences: "Proste śniadania i lekkie kolacje podczas pracy nad sprawami SKD. Zakupy w Lidlu/Biedronce.",
+  },
+] as const;
+
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {
   return message.parts
     .filter((part) => part.type === "text")
@@ -121,7 +142,7 @@ export default function MealPlannerPage() {
     void createPlan();
   }
 
-  function useExample(example: (typeof examples)[number]) {
+  function useExample(example: (typeof skdExamples)[number]) {
     setBudget(example.budget);
     setDays(example.days);
     setPeople(example.people);
@@ -198,7 +219,7 @@ export default function MealPlannerPage() {
         </form>
 
         <div className="meal-examples" aria-label="Przykładowe plany">
-          {examples.map((example) => (
+          {skdExamples.map((example) => (
             <button
               disabled={isLoading}
               key={`${example.days}-${example.budget}-${example.preferences}`}

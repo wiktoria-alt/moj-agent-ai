@@ -15,11 +15,11 @@ const formatTransport = new DefaultChatTransport({
 });
 
 const sampleCommands = [
-  "/tabela języki programowania 2026",
-  "/porownanie ChatGPT vs Claude",
-  "/lista 5 kroków do pierwszego agenta AI",
-  "/faq sztuczna inteligencja dla początkujących",
-  "/email podziękowanie za udaną rekrutację",
+  "/tabela naruszenia SKD: obowiązek informacyjny, ryzyko, dokument do sprawdzenia",
+  "/porownanie umowa kredytu vs formularz informacyjny pod kątem SKD",
+  "/lista 7 kroków do wstępnej analizy sankcji kredytu darmowego",
+  "/faq klienta: jakie dokumenty są potrzebne do SKD",
+  "/email prośba do klienta o komplet dokumentów kredytowych",
 ] as const;
 
 function getMessageText(message: { parts: Array<{ type: string; text?: string }> }) {

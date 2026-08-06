@@ -7890,6 +7890,8 @@ h2 {
   min-height: 100vh;
   background: var(--app-bg);
   color: var(--app-text);
+  align-items: stretch;
+  overflow-y: auto;
 }
 
 .translator-panel {
@@ -7899,7 +7901,8 @@ h2 {
   border-radius: 24px;
   background: var(--app-bg-panel);
   box-shadow: var(--app-shadow);
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
 }
 
 .translator-panel .chat-header {
@@ -7955,7 +7958,7 @@ h2 {
 }
 
 .translator-grid textarea {
-  min-height: 280px;
+  min-height: 240px;
   resize: vertical;
   padding: 14px;
   line-height: 1.55;

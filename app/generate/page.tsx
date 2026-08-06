@@ -6,12 +6,12 @@ import { TopNavigation } from "../components/TopNavigation";
 import { getAiModelDetails, type AiModel } from "../lib/models";
 
 const sampleImagePrompts = [
-  "Minimalistyczne logo kawiarni w stylu japońskim",
-  "Post na Instagram: kawa latte art, ciepłe światło, widok z góry",
-  "Kreacja reklamowa: wyprzedaż letnia -50%, nowoczesny design",
-  "Ikona aplikacji: robot AI, gradient fioletowo-niebieski, flat design",
-  "Infografika: 5 kroków do produktywności, pastelowe kolory",
-  "Zdjęcie produktowe: elegancki zegarek na ciemnym tle",
+  "Infografika: 5 kroków do sprawdzenia sankcji kredytu darmowego, profesjonalny styl",
+  "Grafika na social media: czy Twoja umowa kredytu ma błędy informacyjne?",
+  "Ikona aplikacji: ekspert SKD, dokumenty kredytowe, granat i fiolet",
+  "Baner: analiza umowy kredytu konsumenckiego, elegancki styl kancelaryjny",
+  "Post edukacyjny: RRSO, prowizja i całkowity koszt kredytu — co sprawdzić",
+  "Ilustracja: klient, umowa kredytu i lupa nad zapisami, nowoczesny flat design",
 ] as const;
 
 type GenerateImageResponse = {
