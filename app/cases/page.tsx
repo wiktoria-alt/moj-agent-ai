@@ -255,6 +255,7 @@ export default function CasesPage() {
   const [draft, setDraft] = useState<ClientCase>(getEmptyCase);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [calculator, setCalculator] = useState<CalculatorInput>(defaultCalculatorInput);
+  const [draftCalculator, setDraftCalculator] = useState<CalculatorInput>(defaultCalculatorInput);
   const [pdfError, setPdfError] = useState("");
   const [pdfStatus, setPdfStatus] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -288,6 +289,16 @@ export default function CasesPage() {
   }, [selectedCase?.id]);
 
   const calculatorResult = useMemo(() => calculateSkd(calculator), [calculator]);
+  const draftCalculatorResult = useMemo(
+    () => calculateSkd(draftCalculator),
+    [draftCalculator],
+  );
+  const hasDraftCalculation = Boolean(
+    draftCalculator.contractAmount.trim() ||
+      draftCalculator.paidOutAmount.trim() ||
+      draftCalculator.interestRate.trim() ||
+      draftCalculator.months.trim(),
+  );
   const personalDataWarnings = detectPersonalData(`${draft.reference} ${draft.notes}`);
   const missingDocuments = selectedCase
     ? documents.filter((document) => !selectedCase.documents[document.id])
@@ -307,6 +318,45 @@ export default function CasesPage() {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
+  function updateDraftAmount(
+    key: keyof ClientCase["amounts"],
+    value: string,
+  ) {
+    const nextAmounts = { ...draft.amounts, [key]: value };
+    updateDraft("amounts", nextAmounts);
+
+    if (key === "capital" || key === "commission" || key === "insurance") {
+      const contractAmount =
+        parseNumber(nextAmounts.capital) +
+        parseNumber(nextAmounts.commission) +
+        parseNumber(nextAmounts.insurance);
+
+      setDraftCalculator((current) => ({
+        ...current,
+        contractAmount: contractAmount > 0 ? String(contractAmount) : "",
+        paidOutAmount:
+          key === "capital" ? value : current.paidOutAmount || nextAmounts.capital,
+      }));
+    }
+  }
+
+  function editCase(item: ClientCase) {
+    setDraft(item);
+    setSelectedCaseId(item.id);
+    setDraftCalculator(
+      item.calculation?.input ?? {
+        ...defaultCalculatorInput,
+        contractAmount: String(
+          parseNumber(item.amounts.capital) +
+            parseNumber(item.amounts.commission) +
+            parseNumber(item.amounts.insurance) ||
+            "",
+        ),
+        paidOutAmount: item.amounts.capital,
+      },
+    );
+  }
+
   function updateSelectedCase(updater: (item: ClientCase) => ClientCase) {
     if (!selectedCase) return;
     setCases((current) =>
@@ -323,8 +373,20 @@ export default function CasesPage() {
     if (personalDataWarnings.length) return;
     const now = new Date().toISOString();
     const generatedId = draft.id || createCaseId();
+    const savedAt = new Date().toISOString();
     const item = {
       ...draft,
+      amounts: {
+        ...draft.amounts,
+        capital: draftCalculator.paidOutAmount || draft.amounts.capital,
+      },
+      calculation: hasDraftCalculation
+        ? {
+            input: draftCalculator,
+            result: draftCalculatorResult,
+            savedAt,
+          }
+        : draft.calculation,
       createdAt: draft.createdAt || now,
       id: generatedId,
       reference: draft.reference.trim() || generatedId,
@@ -337,6 +399,7 @@ export default function CasesPage() {
     );
     setSelectedCaseId(item.id);
     setDraft(getEmptyCase());
+    setDraftCalculator(defaultCalculatorInput);
   }
 
   function saveCalculation() {
@@ -466,16 +529,42 @@ export default function CasesPage() {
               ))}
             </fieldset>
             <div className="cases-form-grid">
-              <label>Kapitał wypłacony<input inputMode="decimal" onChange={(event) => updateDraft("amounts", { ...draft.amounts, capital: event.target.value })} value={draft.amounts.capital} /></label>
-              <label>Suma zapłaconych rat<input inputMode="decimal" onChange={(event) => updateDraft("amounts", { ...draft.amounts, paidSum: event.target.value })} value={draft.amounts.paidSum} /></label>
-              <label>Prowizja<input inputMode="decimal" onChange={(event) => updateDraft("amounts", { ...draft.amounts, commission: event.target.value })} value={draft.amounts.commission} /></label>
-              <label>Ubezpieczenie<input inputMode="decimal" onChange={(event) => updateDraft("amounts", { ...draft.amounts, insurance: event.target.value })} value={draft.amounts.insurance} /></label>
+              <label>Kapitał wypłacony<input inputMode="decimal" onChange={(event) => updateDraftAmount("capital", event.target.value)} value={draft.amounts.capital} /></label>
+              <label>Suma zapłaconych rat<input inputMode="decimal" onChange={(event) => updateDraftAmount("paidSum", event.target.value)} value={draft.amounts.paidSum} /></label>
+              <label>Prowizja<input inputMode="decimal" onChange={(event) => updateDraftAmount("commission", event.target.value)} value={draft.amounts.commission} /></label>
+              <label>Ubezpieczenie<input inputMode="decimal" onChange={(event) => updateDraftAmount("insurance", event.target.value)} value={draft.amounts.insurance} /></label>
             </div>
+
+            <section className="cases-inline-calculator" aria-label="Kalkulator przed zapisaniem sprawy">
+              <div className="cases-inline-calculator-heading">
+                <div>
+                  <span>Kalkulator działa przed zapisem</span>
+                  <h3>⚖️ Oblicz wstępny wynik</h3>
+                </div>
+                <strong>{formatMoney(draftCalculatorResult.estimatedClaim)}</strong>
+              </div>
+              <div className="cases-form-grid">
+                <label>Kwota kredytu z umowy<input inputMode="decimal" onChange={(event) => setDraftCalculator((value) => ({ ...value, contractAmount: event.target.value }))} value={draftCalculator.contractAmount} /></label>
+                <label>Kwota oddana do dyspozycji<input inputMode="decimal" onChange={(event) => { const value = event.target.value; setDraftCalculator((current) => ({ ...current, paidOutAmount: value })); updateDraft("amounts", { ...draft.amounts, capital: value }); }} value={draftCalculator.paidOutAmount} /></label>
+                <label>Oprocentowanie nominalne (%)<input inputMode="decimal" onChange={(event) => setDraftCalculator((value) => ({ ...value, interestRate: event.target.value }))} value={draftCalculator.interestRate} /></label>
+                <label>RRSO (%)<input inputMode="decimal" onChange={(event) => setDraftCalculator((value) => ({ ...value, rrso: event.target.value }))} value={draftCalculator.rrso} /></label>
+                <label>Okres kredytowania (miesiące)<input inputMode="numeric" onChange={(event) => setDraftCalculator((value) => ({ ...value, months: event.target.value }))} value={draftCalculator.months} /></label>
+                <label>Data umowy<input onChange={(event) => setDraftCalculator((value) => ({ ...value, contractDate: event.target.value }))} type="date" value={draftCalculator.contractDate} /></label>
+                <label>Czy kredyt spłacony?<select onChange={(event) => setDraftCalculator((value) => ({ ...value, isPaidOff: event.target.value as "TAK" | "NIE" }))} value={draftCalculator.isPaidOff}><option>TAK</option><option>NIE</option></select></label>
+              </div>
+              <dl>
+                <div><dt>Rata standardowa</dt><dd>{formatMoney(draftCalculatorResult.standardInstallment)}</dd></div>
+                <div><dt>Rata po SKD</dt><dd>{formatMoney(draftCalculatorResult.skdInstallment)}</dd></div>
+                <div><dt>Koszty skredytowane</dt><dd>{formatMoney(draftCalculatorResult.financedCosts)}</dd></div>
+              </dl>
+              <p>Wynik zmienia się od razu podczas wpisywania i zostanie zapisany razem ze sprawą.</p>
+            </section>
+
             <label>Notatka bez danych osobowych<textarea onChange={(event) => updateDraft("notes", event.target.value)} placeholder="Np. sprawdzić RRSO i kredytowaną prowizję…" value={draft.notes} /></label>
             {personalDataWarnings.length ? <p className="cases-warning">Usuń dane osobowe przed zapisem: {personalDataWarnings.join(", ")}.</p> : null}
             <div className="cases-actions">
-              <button disabled={personalDataWarnings.length > 0} type="submit">{draft.id ? "Zapisz zmiany" : "Dodaj sprawę"}</button>
-              {draft.id ? <button onClick={() => setDraft(getEmptyCase())} type="button">Anuluj</button> : null}
+              <button disabled={personalDataWarnings.length > 0} type="submit">{draft.id ? "Zapisz sprawę i wynik" : "Dodaj sprawę i zapisz wynik"}</button>
+              {draft.id ? <button onClick={() => { setDraft(getEmptyCase()); setDraftCalculator(defaultCalculatorInput); }} type="button">Anuluj</button> : null}
             </div>
           </form>
 
@@ -495,7 +584,7 @@ export default function CasesPage() {
                   <div className="cases-detail-header">
                     <div><span>Aktywna sprawa</span><h2>{selectedCase.reference}</h2><p>{selectedCase.bank || "Bank nieuzupełniony"} · {selectedCase.product}</p></div>
                     <div className="cases-detail-actions">
-                      <button onClick={() => setDraft(selectedCase)} type="button">Edytuj</button>
+                      <button onClick={() => editCase(selectedCase)} type="button">Edytuj</button>
                       <button onClick={() => deleteCase(selectedCase.id)} type="button">Usuń</button>
                     </div>
                   </div>

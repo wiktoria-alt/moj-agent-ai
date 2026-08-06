@@ -8418,6 +8418,76 @@ h2 {
   gap: 12px;
 }
 
+.cases-inline-calculator {
+  display: grid;
+  gap: 14px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 42%, var(--app-border));
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--app-accent) 15%, transparent), transparent 50%),
+    var(--app-bg-panel);
+  padding: 16px;
+}
+
+.cases-inline-calculator-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cases-inline-calculator-heading span {
+  color: var(--app-accent);
+  font-size: 0.75rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cases-inline-calculator-heading h3 {
+  margin: 4px 0 0;
+  color: var(--app-text);
+}
+
+.cases-inline-calculator-heading > strong {
+  color: var(--app-text);
+  font-size: 1.6rem;
+  letter-spacing: -0.04em;
+  text-align: right;
+}
+
+.cases-inline-calculator dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.cases-inline-calculator dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--app-border);
+  padding-top: 7px;
+}
+
+.cases-inline-calculator dt {
+  color: var(--app-text-soft);
+}
+
+.cases-inline-calculator dd {
+  margin: 0;
+  color: var(--app-text);
+  font-weight: 950;
+  text-align: right;
+}
+
+.cases-inline-calculator > p {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 .cases-documents {
   display: grid;
   gap: 10px;
@@ -8644,6 +8714,15 @@ h2 {
 
   .cases-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .cases-inline-calculator-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cases-inline-calculator-heading > strong {
+    text-align: left;
   }
 }
 
