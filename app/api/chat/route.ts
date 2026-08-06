@@ -861,6 +861,10 @@ function replaceLastUserText(
 }
 
 function shouldPrioritizeKnowledgeSearch(text: string): boolean {
+  if (/(baz[ay]\s+wiedzy|ustaw|kredyt|konsumenck|skd|sankcj|obowi[aą]zk|informacyjn|rrso|formularz|prowizj|narusze[nń]|umow)/i.test(text)) {
+    return true;
+  }
+
   return /(cen(a|y|ę|nik)|koszt|pakiet|ofert|usług|procedur|regulamin|faq|rezygn)/i.test(
     text,
   );

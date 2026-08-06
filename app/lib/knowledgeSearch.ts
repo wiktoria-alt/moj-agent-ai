@@ -1,5 +1,6 @@
+import { createClient } from "@supabase/supabase-js";
 import { createEmbedding } from "./embeddings";
-import { supabase } from "./supabase";
+import { supabase as publicSupabase } from "./supabase";
 
 export type KnowledgeSearchResult = {
   added_at: string | null;
@@ -24,44 +25,17 @@ type MatchDocumentRow = {
   title?: unknown;
 };
 
-const genericSearchTerms = new Set([
-  "cena",
-  "ceny",
-  "cennik",
-  "czy",
-  "dla",
-  "faq",
-  "firma",
-  "ile",
-  "jak",
-  "jakie",
-  "koszt",
-  "kosztuje",
-  "oferta",
-  "pakiet",
-  "regulamin",
-  "sa",
-  "usluga",
-  "uslugi",
-  "warunki",
-]);
+function getKnowledgeSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-function normalizeSearchText(value: string) {
-  return value
-    .toLocaleLowerCase("pl-PL")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
-}
+  if (supabaseUrl && serviceRoleKey) {
+    return createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  }
 
-function getSpecificTerms(query: string) {
-  return normalizeSearchText(query)
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter(
-      (term) =>
-        term.length >= 5 &&
-        !genericSearchTerms.has(term) &&
-        !term.startsWith("koszt"),
-    );
+  return publicSupabase;
 }
 
 export async function searchKnowledgeBase(
@@ -78,10 +52,11 @@ export async function searchKnowledgeBase(
     };
   }
 
+  const supabase = getKnowledgeSupabase();
   const queryEmbedding = await createEmbedding(normalizedQuery);
   const { data, error } = await supabase.rpc("match_documents", {
-    match_count: 5,
-    match_threshold: 0.5,
+    match_count: 8,
+    match_threshold: 0.35,
     query_embedding: queryEmbedding,
   });
 
@@ -131,28 +106,13 @@ export async function searchKnowledgeBase(
       title: typeof match.title === "string" ? match.title : "Bez tytułu",
     };
   });
-  const specificTerms = getSpecificTerms(normalizedQuery);
-  const relevantResults =
-    specificTerms.length === 0
-      ? results
-      : results.filter((result) => {
-          const searchableText = normalizeSearchText(
-            `${result.title} ${result.content}`,
-          );
+  const sourceDocuments = [...new Set(results.map((result) => result.title))];
 
-          return specificTerms.some((term) =>
-            searchableText.includes(term.slice(0, Math.min(term.length, 7))),
-          );
-        });
-  const sourceDocuments = [
-    ...new Set(relevantResults.map((result) => result.title)),
-  ];
-
-  return relevantResults.length > 0
+  return results.length > 0
     ? {
-        results: relevantResults,
+        results,
         source_documents: sourceDocuments,
-        total_found: relevantResults.length,
+        total_found: results.length,
       }
     : {
         message: "Nie znaleziono informacji w bazie wiedzy.",
