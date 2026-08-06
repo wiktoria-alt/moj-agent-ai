@@ -63,6 +63,53 @@ const examples = [
   },
 ] as const;
 
+function cleanPdfText(value: string) {
+  return value
+    .replace(/\r/g, "\n")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+async function extractPdfTextInBrowser(file: File) {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    pdfjs.GlobalWorkerOptions.workerSrc ||
+    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.mjs`;
+
+  const data = new Uint8Array(await file.arrayBuffer());
+  const loadingTask = pdfjs.getDocument({
+    data,
+    disableFontFace: true,
+    useSystemFonts: true,
+  });
+  const pdf = await loadingTask.promise;
+  const pages: string[] = [];
+
+  try {
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const pageContent = await page.getTextContent();
+      const pageText = pageContent.items
+        .map((item) => ("str" in item ? item.str : ""))
+        .join(" ");
+
+      pages.push(pageText);
+      page.cleanup();
+    }
+
+    return {
+      pages: pdf.numPages,
+      text: cleanPdfText(pages.join("\n\n")),
+    };
+  } finally {
+    await loadingTask.destroy();
+  }
+}
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const {
     data: { session },
@@ -240,7 +287,7 @@ export default function UploadPage() {
       setNotice({
         kind: "error",
         text:
-          "PDF jest za duży dla szybkiego importu na Vercel. Maksymalny rozmiar to 4 MB. Podziel plik, skompresuj PDF albo skopiuj tekst z PDF i wklej go ręcznie.",
+          "PDF jest za duży dla szybkiego importu. Maksymalny rozmiar to 4 MB. Podziel plik, skompresuj PDF albo skopiuj tekst z PDF i wklej go ręcznie.",
       });
       return;
     }
@@ -249,41 +296,22 @@ export default function UploadPage() {
     setNotice(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const data = await extractPdfTextInBrowser(file);
 
-      const response = await fetch("/api/extract-pdf", {
-        method: "POST",
-        body: formData,
-      });
-      const rawResponse = await response.text();
-      let data: {
-        error?: string;
-        fileName?: string;
-        pages?: number | null;
-        text?: string;
-      };
-
-      try {
-        data = JSON.parse(rawResponse) as typeof data;
-      } catch {
+      if (data.text.length < 40) {
         throw new Error(
-          "Serwer nie zwrócił poprawnej odpowiedzi przy odczycie PDF. Najczęściej oznacza to zbyt duży plik albo niedokończony deploy. Spróbuj mniejszego PDF albo odśwież po deployu.",
+          "Nie udało się odczytać tekstu z PDF. Jeśli to skan, najpierw użyj OCR albo wklej tekst ręcznie.",
         );
       }
 
-      if (!response.ok || !data.text) {
-        throw new Error(data.error || "Nie udało się odczytać PDF.");
-      }
-
-      const cleanName = (data.fileName || file.name).replace(/\.pdf$/i, "").trim();
+      const cleanName = file.name.replace(/\.pdf$/i, "").trim();
       if (!title.trim()) {
         setTitle(cleanName || "Dokument PDF");
       }
       setContent(data.text);
       setNotice({
         kind: "success",
-        text: `✅ Odczytano PDF${data.pages ? ` (${data.pages} stron)` : ""}. Sprawdź tekst i kliknij „Zapisz w bazie wiedzy”.`,
+        text: `✅ Odczytano PDF (${data.pages} stron). Sprawdź tekst i kliknij „Zapisz w bazie wiedzy”.`,
       });
     } catch (error) {
       setNotice({
@@ -458,7 +486,7 @@ export default function UploadPage() {
               {isPdfLoading ? "Czytam PDF…" : "📎 Dodaj PDF do bazy wiedzy"}
             </button>
             <span>
-              PDF zostanie najpierw zamieniony na tekst. Limit szybkiego importu: 4 MB.
+              PDF zostanie zamieniony na tekst w Twojej przeglądarce. Limit szybkiego importu: 4 MB.
             </span>
           </div>
 
