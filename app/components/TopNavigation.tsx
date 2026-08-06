@@ -34,6 +34,7 @@ const navGroups: NavGroup[] = [
       { href: "/think", label: "🧠 Myślenie" },
       { href: "/fewshot", label: "📖 Słownik" },
       { href: "/format", label: "🧾 Formater" },
+      { href: "/google-translate", label: "🌍 Tłumacz Google" },
       { href: "/search", label: "🔎 Szukaj" },
       { href: "/generate", label: "🎨 Grafiki" },
       { href: "/vision", label: "👁️ Vision" },

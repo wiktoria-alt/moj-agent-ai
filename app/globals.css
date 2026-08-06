@@ -7884,3 +7884,142 @@ h2 {
   background: #dbeafe !important;
   color: #1e3a8a !important;
 }
+
+/* Google Translate tab */
+.translator-shell {
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.translator-panel {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  border: 1px solid var(--app-border);
+  border-radius: 24px;
+  background: var(--app-bg-panel);
+  box-shadow: var(--app-shadow);
+  overflow: hidden;
+}
+
+.translator-panel .chat-header {
+  border-bottom: 1px solid var(--app-border);
+  padding: 24px;
+}
+
+.brand-mark.translate {
+  background: linear-gradient(135deg, #2563eb, #22c55e, #f59e0b, #ef4444);
+  color: #ffffff;
+}
+
+.translator-card {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.translator-controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 14px;
+  align-items: end;
+}
+
+.translator-controls label,
+.translator-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--app-text-soft);
+  font-weight: 900;
+}
+
+.translator-controls select,
+.translator-grid textarea {
+  width: 100%;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-bg-muted);
+  color: var(--app-text);
+  font: inherit;
+}
+
+.translator-controls select {
+  min-height: 46px;
+  padding: 0 12px;
+}
+
+.translator-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.translator-grid textarea {
+  min-height: 280px;
+  resize: vertical;
+  padding: 14px;
+  line-height: 1.55;
+}
+
+.translator-controls button,
+.translator-actions button {
+  min-height: 46px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-bg-muted);
+  color: var(--app-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 950;
+  padding: 0 16px;
+}
+
+.translator-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.translator-actions button:first-child {
+  border-color: transparent;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #ffffff;
+}
+
+.translator-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.translator-actions span {
+  color: var(--app-text-muted);
+  font-weight: 800;
+}
+
+.translator-error {
+  margin: 0;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 14px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #fecaca;
+  font-weight: 800;
+  padding: 12px 14px;
+}
+
+[data-theme="light"] .translator-error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+@media (max-width: 760px) {
+  .translator-controls,
+  .translator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .translator-panel .chat-header,
+  .translator-card {
+    padding: 18px;
+  }
+}
