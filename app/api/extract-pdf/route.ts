@@ -3,7 +3,7 @@ import { PDFParse } from "pdf-parse";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const maxPdfSize = 12 * 1024 * 1024;
+const maxPdfSize = 4 * 1024 * 1024;
 
 function cleanPdfText(value: string) {
   return value
@@ -35,7 +35,10 @@ export async function POST(request: Request) {
 
     if (file.size > maxPdfSize) {
       return Response.json(
-        { error: "PDF jest za duży. Maksymalny rozmiar to 12 MB." },
+        {
+          error:
+            "PDF jest za duży dla szybkiego importu na Vercel. Maksymalny rozmiar to 4 MB. Podziel plik, skompresuj PDF albo wklej tekst ręcznie.",
+        },
         { status: 413 },
       );
     }

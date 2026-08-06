@@ -40,6 +40,8 @@ type ProgressEvent = {
   type: "start" | "progress" | "complete" | "error";
 };
 
+const maxPdfUploadSize = 4 * 1024 * 1024;
+
 const examples = [
   {
     label: "SKD checklista",
@@ -234,6 +236,15 @@ export default function UploadPage() {
       return;
     }
 
+    if (file.size > maxPdfUploadSize) {
+      setNotice({
+        kind: "error",
+        text:
+          "PDF jest za duży dla szybkiego importu na Vercel. Maksymalny rozmiar to 4 MB. Podziel plik, skompresuj PDF albo skopiuj tekst z PDF i wklej go ręcznie.",
+      });
+      return;
+    }
+
     setIsPdfLoading(true);
     setNotice(null);
 
@@ -245,12 +256,21 @@ export default function UploadPage() {
         method: "POST",
         body: formData,
       });
-      const data = (await response.json()) as {
+      const rawResponse = await response.text();
+      let data: {
         error?: string;
         fileName?: string;
         pages?: number | null;
         text?: string;
       };
+
+      try {
+        data = JSON.parse(rawResponse) as typeof data;
+      } catch {
+        throw new Error(
+          "Serwer nie zwrócił poprawnej odpowiedzi przy odczycie PDF. Najczęściej oznacza to zbyt duży plik albo niedokończony deploy. Spróbuj mniejszego PDF albo odśwież po deployu.",
+        );
+      }
 
       if (!response.ok || !data.text) {
         throw new Error(data.error || "Nie udało się odczytać PDF.");
@@ -438,7 +458,7 @@ export default function UploadPage() {
               {isPdfLoading ? "Czytam PDF…" : "📎 Dodaj PDF do bazy wiedzy"}
             </button>
             <span>
-              PDF zostanie najpierw zamieniony na tekst, żeby można było go sprawdzić przed zapisem.
+              PDF zostanie najpierw zamieniony na tekst. Limit szybkiego importu: 4 MB.
             </span>
           </div>
 
