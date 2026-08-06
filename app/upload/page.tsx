@@ -1,7 +1,15 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { TopNavigation } from "../components/TopNavigation";
+import { supabase } from "../lib/supabase";
 
 type StoredDocument = {
   chunks: number;
@@ -34,27 +42,40 @@ type ProgressEvent = {
 
 const examples = [
   {
-    label: "Cennik",
-    title: "Cennik 2026",
+    label: "SKD checklista",
+    title: "SKD — podstawowa checklista",
     content:
-      "Pakiet Basic: 99 zł/miesiąc. Pakiet Premium: 299 zł/miesiąc. Pakiet VIP: 599 zł/miesiąc. Wszystkie pakiety mają 14-dniowy okres próbny.",
+      "Sankcja kredytu darmowego może być analizowana przy kredycie konsumenckim. W pierwszym kroku sprawdź: datę zawarcia umowy, kwotę kredytu, status spłaty, termin roczny od wykonania umowy, RRSO, całkowity koszt kredytu, prowizję, zasady wcześniejszej spłaty, harmonogram i formularz informacyjny. Wynik analizy nie jest gwarancją wygranej — wymaga oceny dokumentów.",
   },
   {
-    label: "FAQ",
-    title: "FAQ",
+    label: "FAQ klienta",
+    title: "SKD — FAQ klienta",
     content:
-      "P: Jak anulować subskrypcję? O: Wyślij wiadomość na adres pomoc@firma.pl. P: Kiedy otrzymam fakturę? O: Faktura jest wystawiana automatycznie.",
+      "P: Czy każda umowa kredytu daje SKD? O: Nie. Najpierw trzeba sprawdzić, czy to kredyt konsumencki i czy umowa zawiera naruszenia obowiązków informacyjnych. P: Jakie dokumenty przygotować? O: Umowę kredytu, formularz informacyjny, harmonogram, aneksy, potwierdzenia spłaty, korespondencję z bankiem. P: Czy agent zastępuje prawnika? O: Nie, agent robi wstępną analizę i pomaga przygotować materiał do dalszej oceny.",
   },
   {
-    label: "Regulamin",
-    title: "Regulamin firmy",
+    label: "Wzór pisma",
+    title: "SKD — szkic oświadczenia",
     content:
-      "§1. Postanowienia ogólne. Niniejszy regulamin określa zasady korzystania z usług. Klient może zrezygnować w dowolnym momencie.",
+      "Oświadczenie o skorzystaniu z sankcji kredytu darmowego powinno zawierać dane konsumenta, dane kredytodawcy, numer umowy, datę zawarcia umowy, wskazanie podstawy prawnej, opis zauważonych naruszeń oraz żądanie rozliczenia kredytu bez odsetek i kosztów. Przed wysyłką dokument powinien zostać sprawdzony przez osobę kompetentną.",
   },
 ] as const;
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
+}
+
 async function fetchDocuments() {
-  const response = await fetch("/api/documents", { cache: "no-store" });
+  const response = await fetch("/api/documents", {
+    cache: "no-store",
+    headers: await getAuthHeaders(),
+  });
   const data = (await response.json()) as {
     documents?: StoredDocument[];
     error?: string;
@@ -66,6 +87,7 @@ async function fetchDocuments() {
 async function fetchDocumentFragments(title: string) {
   const response = await fetch(`/api/documents?title=${encodeURIComponent(title)}`, {
     cache: "no-store",
+    headers: await getAuthHeaders(),
   });
   const data = (await response.json()) as {
     error?: string;
@@ -84,6 +106,7 @@ export default function UploadPage() {
   const [fragments, setFragments] = useState<DocumentFragment[]>([]);
   const [isFragmentsLoading, setIsFragmentsLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isListLoading, setIsListLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -95,6 +118,7 @@ export default function UploadPage() {
     kind: "error" | "success";
     text: string;
   } | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   const refreshDocuments = useCallback(async () => {
     setDocuments(await fetchDocuments());
@@ -138,7 +162,10 @@ export default function UploadPage() {
     try {
       const response = await fetch("/api/upload-knowledge", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(await getAuthHeaders()),
+        },
         body: JSON.stringify({ title, content }),
       });
 
@@ -199,6 +226,58 @@ export default function UploadPage() {
     }
   }
 
+  async function handlePdfUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || isPdfLoading || isLoading) {
+      return;
+    }
+
+    setIsPdfLoading(true);
+    setNotice(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/extract-pdf", {
+        method: "POST",
+        body: formData,
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        fileName?: string;
+        pages?: number | null;
+        text?: string;
+      };
+
+      if (!response.ok || !data.text) {
+        throw new Error(data.error || "Nie udało się odczytać PDF.");
+      }
+
+      const cleanName = (data.fileName || file.name).replace(/\.pdf$/i, "").trim();
+      if (!title.trim()) {
+        setTitle(cleanName || "Dokument PDF");
+      }
+      setContent(data.text);
+      setNotice({
+        kind: "success",
+        text: `✅ Odczytano PDF${data.pages ? ` (${data.pages} stron)` : ""}. Sprawdź tekst i kliknij „Zapisz w bazie wiedzy”.`,
+      });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się odczytać PDF.",
+      });
+    } finally {
+      setIsPdfLoading(false);
+    }
+  }
+
   async function deleteDocument(documentTitle: string) {
     if (!window.confirm(`Usunąć dokument „${documentTitle}” i wszystkie jego fragmenty?`)) {
       return;
@@ -207,7 +286,10 @@ export default function UploadPage() {
     try {
       const response = await fetch("/api/documents", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(await getAuthHeaders()),
+        },
         body: JSON.stringify({ title: documentTitle }),
       });
       const data = (await response.json()) as { error?: string };
@@ -264,7 +346,10 @@ export default function UploadPage() {
     try {
       const response = await fetch("/api/search-knowledge", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(await getAuthHeaders()),
+        },
         body: JSON.stringify({ query }),
       });
       const data = (await response.json()) as {
@@ -302,11 +387,11 @@ export default function UploadPage() {
       <header className="knowledge-hero">
         <div>
           <p className="eyebrow">Ingestia wiedzy</p>
-          <h1>📚 Baza wiedzy</h1>
+          <h1>📚 Baza wiedzy SKD</h1>
         </div>
         <p>
-          Wklej tekst — Marta podzieli go na fragmenty, utworzy embeddingi i
-          zapisze fakty w Supabase.
+          Dodaj ustawę, checklistę, wzór pisma albo PDF z materiałami SKD.
+          Agent podzieli treść na fragmenty i będzie odpowiadał na podstawie źródeł.
         </p>
       </header>
 
@@ -318,7 +403,7 @@ export default function UploadPage() {
               disabled={isLoading}
               id="knowledge-title"
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Np. Cennik 2026, FAQ, Regulamin firmy"
+              placeholder="Np. SKD — ustawa, checklista, wzór reklamacji"
               required
               value={title}
             />
@@ -330,13 +415,34 @@ export default function UploadPage() {
               disabled={isLoading}
               id="knowledge-content"
               onChange={(event) => setContent(event.target.value)}
-              placeholder="Wklej tutaj treść dokumentu..."
+              placeholder="Wklej tutaj treść dokumentu albo użyj przycisku PDF poniżej..."
               required
               value={content}
             />
           </div>
 
-          <div className="knowledge-examples" aria-label="Przykładowe dokumenty">
+          <div className="knowledge-pdf-upload">
+            <input
+              accept="application/pdf,.pdf"
+              className="sr-only"
+              disabled={isLoading || isPdfLoading}
+              onChange={handlePdfUpload}
+              ref={pdfInputRef}
+              type="file"
+            />
+            <button
+              disabled={isLoading || isPdfLoading}
+              onClick={() => pdfInputRef.current?.click()}
+              type="button"
+            >
+              {isPdfLoading ? "Czytam PDF…" : "📎 Dodaj PDF do bazy wiedzy"}
+            </button>
+            <span>
+              PDF zostanie najpierw zamieniony na tekst, żeby można było go sprawdzić przed zapisem.
+            </span>
+          </div>
+
+          <div className="knowledge-examples" aria-label="Przykładowe dokumenty SKD">
             <span>Podpowiedzi:</span>
             {examples.map((example) => (
               <button
@@ -407,7 +513,7 @@ export default function UploadPage() {
                   setSearchQuery(event.target.value);
                   setHasSearched(false);
                 }}
-                placeholder="Szukaj w bazie wiedzy..."
+                placeholder="Np. termin SKD, RRSO, prowizja..."
                 value={searchQuery}
               />
               <button disabled={isSearching || !searchQuery.trim()} type="submit">
@@ -479,7 +585,7 @@ export default function UploadPage() {
             ) : (
               <p className="knowledge-empty">
                 <strong>Jeszcze tu cicho.</strong>
-                Dodaj pierwszy dokument, aby zbudować bazę wiedzy.
+                Dodaj pierwszy dokument SKD, aby agent miał własne źródła.
               </p>
             )}
 
@@ -504,8 +610,8 @@ export default function UploadPage() {
 
           <div className="knowledge-tip">
             <strong>Jak przygotować tekst?</strong>
-            Dodawaj konkretne, aktualne informacje: ceny, odpowiedzi na pytania
-            klientów albo zasady współpracy.
+            Najlepiej dodawaj materiały źródłowe: checklisty SKD, wzory pism,
+            fragmenty ustawy, FAQ klienta i procedury analizy umowy.
           </div>
         </aside>
       </section>

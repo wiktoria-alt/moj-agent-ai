@@ -1,4 +1,4 @@
-import { supabase } from "../../lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 type DocumentRow = {
   content?: string;
@@ -7,7 +7,62 @@ type DocumentRow = {
   title: string;
 };
 
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Brakuje konfiguracji Supabase.");
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+function getSupabaseAuthClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Brakuje konfiguracji Supabase Auth.");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+async function getUserId(request: Request) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+  if (!token) {
+    throw new Error("Zaloguj się, aby korzystać z bazy wiedzy.");
+  }
+
+  const supabase = getSupabaseAuthClient();
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data.user) {
+    throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+  }
+
+  return data.user.id;
+}
+
 export async function GET(request: Request) {
+  let userId = "";
+
+  try {
+    userId = await getUserId(request);
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Brak dostępu." },
+      { status: 401 },
+    );
+  }
+
+  const supabase = getSupabaseAdmin();
   const title = new URL(request.url).searchParams.get("title")?.trim();
 
   if (title) {
@@ -15,6 +70,7 @@ export async function GET(request: Request) {
       .from("documents")
       .select("title, content, metadata, created_at")
       .eq("title", title)
+      .eq("user_id", userId)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -27,6 +83,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("documents")
     .select("title, created_at")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -56,6 +113,8 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const userId = await getUserId(request);
+    const supabase = getSupabaseAdmin();
     const body = (await request.json()) as { title?: unknown };
     const title = typeof body.title === "string" ? body.title.trim() : "";
 
@@ -63,7 +122,11 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "Tytuł jest wymagany." }, { status: 400 });
     }
 
-    const { error } = await supabase.from("documents").delete().eq("title", title);
+    const { error } = await supabase
+      .from("documents")
+      .delete()
+      .eq("title", title)
+      .eq("user_id", userId);
     if (error) {
       return Response.json({ error: error.message }, { status: 500 });
     }

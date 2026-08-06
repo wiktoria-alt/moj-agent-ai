@@ -7477,3 +7477,56 @@ h2 {
   background: transparent !important;
   color: var(--app-text) !important;
 }
+
+/* SKD knowledge PDF upload */
+.knowledge-pdf-upload {
+  align-items: center;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px dashed rgba(96, 165, 250, 0.4);
+  border-radius: 18px;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: auto 1fr;
+  padding: 0.9rem;
+}
+
+.knowledge-pdf-upload button {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 14px 35px rgba(37, 99, 235, 0.22);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0.8rem 1rem;
+}
+
+.knowledge-pdf-upload button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.knowledge-pdf-upload span {
+  color: var(--app-text-soft, #cbd5e1);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+[data-theme="light"] .knowledge-pdf-upload {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+[data-theme="light"] .knowledge-pdf-upload span {
+  color: #334155;
+}
+
+@media (max-width: 720px) {
+  .knowledge-pdf-upload {
+    grid-template-columns: 1fr;
+  }
+
+  .knowledge-pdf-upload button {
+    width: 100%;
+  }
+}

@@ -1,6 +1,6 @@
 import { splitIntoChunks } from "../../lib/chunking";
 import { createEmbedding } from "../../lib/embeddings";
-import { supabase } from "../../lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 export const maxDuration = 60;
 
@@ -10,13 +10,64 @@ function streamLine(payload: object) {
   return encoder.encode(`${JSON.stringify(payload)}\n`);
 }
 
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Brakuje konfiguracji Supabase do zapisu bazy wiedzy.");
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+function getSupabaseAuthClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Brakuje konfiguracji Supabase Auth.");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+async function getUserId(request: Request) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+  if (!token) {
+    throw new Error("Zaloguj się, aby dodać dokument do bazy wiedzy.");
+  }
+
+  const supabase = getSupabaseAuthClient();
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data.user) {
+    throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+  }
+
+  return data.user.id;
+}
+
 export async function POST(request: Request) {
   let body: { title?: unknown; content?: unknown };
+  let userId = "";
 
   try {
+    userId = await getUserId(request);
     body = await request.json();
-  } catch {
-    return Response.json({ error: "Niepoprawne body JSON." }, { status: 400 });
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Niepoprawne body JSON.",
+      },
+      { status: 400 },
+    );
   }
 
   const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -37,6 +88,8 @@ export async function POST(request: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        const supabase = getSupabaseAdmin();
+
         controller.enqueue(streamLine({ type: "start", total: chunks.length }));
 
         for (let index = 0; index < chunks.length; index += 1) {
@@ -50,6 +103,7 @@ export async function POST(request: Request) {
               chunk_index: index,
               total_chunks: chunks.length,
             },
+            user_id: userId,
           });
 
           if (error) throw new Error(`Supabase: ${error.message}`);

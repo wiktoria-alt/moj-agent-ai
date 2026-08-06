@@ -18,6 +18,7 @@
     "@supabase/supabase-js": "^2.110.5",
     "ai": "^7.0.11",
     "next": "^16.2.10",
+    "pdf-parse": "^2.4.5",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",

@@ -4,12 +4,12 @@ import { AuthGate } from "./components/AuthGate";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://moj-agent-ai-agent-ai-szkolenie.vercel.app"),
-  applicationName: "Agent AI",
+  applicationName: "Agent SKD",
   title: {
-    default: "Agent AI - Twoj osobisty asystent AI",
-    template: "%s | Agent AI",
+    default: "Agent SKD - ekspert AI od sankcji kredytu darmowego",
+    template: "%s | Agent SKD",
   },
-  description: "Osobisty asystent AI z baza wiedzy, pamiecia rozmow i automatyzacja.",
+  description: "Asystent AI do wstepnej analizy sankcji kredytu darmowego, dokumentow kredytowych i checklist SKD.",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -22,27 +22,27 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "pl_PL",
-    siteName: "Agent AI",
-    title: "Agent AI",
-    description: "Twoj osobisty asystent AI z baza wiedzy, pamiecia i automatyzacja.",
+    siteName: "Agent SKD",
+    title: "Agent SKD",
+    description: "Ekspert AI od sankcji kredytu darmowego, analizy umow i checklist SKD.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Agent AI - Twoj osobisty asystent AI",
+        alt: "Agent SKD - ekspert AI od sankcji kredytu darmowego",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agent AI",
-    description: "Twoj osobisty asystent AI z baza wiedzy, pamiecia i automatyzacja.",
+    title: "Agent SKD",
+    description: "Ekspert AI od sankcji kredytu darmowego, analizy umow i checklist SKD.",
     images: ["/og-image.png"],
   },
   appleWebApp: {
     capable: true,
-    title: "Agent AI",
+    title: "Agent SKD",
     statusBarStyle: "black-translucent",
   },
 };

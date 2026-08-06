@@ -1,7 +1,7 @@
 {
-  "name": "Agent AI",
-  "short_name": "Agent AI",
-  "description": "Osobisty asystent AI z baza wiedzy, pamiecia i automatyzacja.",
+  "name": "Agent SKD",
+  "short_name": "Agent SKD",
+  "description": "Asystent AI do wstepnej analizy sankcji kredytu darmowego i dokumentow kredytowych.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
