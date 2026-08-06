@@ -67,6 +67,7 @@ const timeFormatter = new Intl.DateTimeFormat("pl-PL", {
 });
 
 const quickActions = [
+  { href: "/skd-news", label: "Newsy SKD" },
   { href: "/travel", label: "Podróże" },
   { href: "/react", label: "ReAct" },
   { href: "/chat", label: "Chat" },
@@ -363,6 +364,24 @@ export default function Dashboard() {
                 {action.label}
               </a>
             ))}
+          </div>
+        </article>
+
+        <article className="dashboard-card skd-news-dashboard-card">
+          <header>
+            <div>
+              <p>Radar SKD</p>
+              <h2>NEWSY o SKD</h2>
+            </div>
+            <span>Auto</span>
+          </header>
+          <div className="dashboard-skd-news">
+            <strong>Najnowsze wyroki, TSUE i ważne komentarze</strong>
+            <p>
+              Kafelek prowadzi do stale odświeżanej listy materiałów o sankcji
+              kredytu darmowego i kredycie konsumenckim.
+            </p>
+            <a href="/skd-news">Otwórz radar SKD →</a>
           </div>
         </article>
 
