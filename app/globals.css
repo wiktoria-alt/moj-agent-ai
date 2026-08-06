@@ -7784,3 +7784,103 @@ h2 {
   background: rgba(59, 130, 246, 0.22) !important;
   color: #bfdbfe !important;
 }
+
+/* Strong dashboard contrast pass */
+[data-theme] .dashboard-grid {
+  background: transparent !important;
+}
+
+[data-theme] .dashboard-card {
+  border-color: var(--app-border) !important;
+  background: var(--app-bg-panel) !important;
+  color: var(--app-text) !important;
+}
+
+[data-theme] :is(.weather-card, .currency-card, .holidays-card, .quick-card, .attractions-card) {
+  background: var(--app-bg-panel) !important;
+}
+
+[data-theme] .dashboard-card header p {
+  color: var(--app-accent) !important;
+}
+
+[data-theme] :is(.dashboard-card header h2, .dashboard-metrics strong, .rate-row strong, .holiday-list > strong, .quick-actions a, .dashboard-attractions a) {
+  color: var(--app-text) !important;
+}
+
+[data-theme] :is(.dashboard-card header > span, .dashboard-card small, .dashboard-metrics dt, .rate-row small, .holiday-row small) {
+  color: var(--app-text-muted) !important;
+}
+
+[data-theme] :is(.dashboard-metrics dd, .rate-row > span, .holiday-row span, .dashboard-attractions li) {
+  color: var(--app-text-soft) !important;
+}
+
+[data-theme] :is(.dashboard-metrics dl div, .rate-row, .holiday-row, .quick-actions a, .dashboard-attractions li) {
+  border-color: var(--app-border) !important;
+  background: var(--app-bg-muted) !important;
+}
+
+[data-theme] .rate-row {
+  align-items: center !important;
+}
+
+[data-theme] .rate-row > span {
+  display: inline-grid;
+  min-width: 3.2rem;
+  min-height: 2.2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-accent) 18%, var(--app-bg-panel)) !important;
+  color: var(--app-text) !important;
+  font-weight: 950;
+}
+
+[data-theme] .rate-row strong {
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+[data-theme] .rate-row em {
+  min-width: 5rem;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  padding: 0.4rem 0.6rem !important;
+  font-style: normal !important;
+  font-weight: 950 !important;
+  text-align: center !important;
+}
+
+[data-theme] .rate-row em.up {
+  border-color: color-mix(in srgb, #16a34a 35%, var(--app-border)) !important;
+  background: color-mix(in srgb, #16a34a 16%, var(--app-bg-panel)) !important;
+  color: #16a34a !important;
+}
+
+[data-theme] .rate-row em.down {
+  border-color: color-mix(in srgb, #dc2626 35%, var(--app-border)) !important;
+  background: color-mix(in srgb, #dc2626 14%, var(--app-bg-panel)) !important;
+  color: #dc2626 !important;
+}
+
+[data-theme="dark"] .rate-row em.up {
+  color: #86efac !important;
+}
+
+[data-theme="dark"] .rate-row em.down {
+  color: #fca5a5 !important;
+}
+
+[data-theme="light"] .dashboard-card {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+[data-theme="light"] :is(.dashboard-metrics dl div, .rate-row, .holiday-row, .quick-actions a, .dashboard-attractions li) {
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] .rate-row > span {
+  background: #dbeafe !important;
+  color: #1e3a8a !important;
+}
