@@ -7705,3 +7705,82 @@ h2 {
   background: var(--app-accent) !important;
   color: #ffffff !important;
 }
+
+/* Readability fixes for SKD calculator and knowledge scores */
+[data-theme] .skd-summary {
+  border-color: var(--app-border-strong, var(--app-border)) !important;
+  background: var(--app-bg-panel) !important;
+  color: var(--app-text-soft) !important;
+}
+
+[data-theme] .skd-summary span {
+  color: var(--app-accent) !important;
+}
+
+[data-theme] .skd-summary strong {
+  color: var(--app-text) !important;
+  text-shadow: none !important;
+}
+
+[data-theme] .skd-summary p {
+  color: var(--app-text-soft) !important;
+}
+
+[data-theme] :is(.skd-card, .skd-note, .skd-comparison, .skd-comparison div) {
+  border-color: var(--app-border) !important;
+  background: var(--app-bg-panel) !important;
+  color: var(--app-text) !important;
+}
+
+[data-theme] .skd-card.accent {
+  border-color: color-mix(in srgb, var(--app-accent) 55%, var(--app-border)) !important;
+  background: color-mix(in srgb, var(--app-accent) 12%, var(--app-bg-panel)) !important;
+}
+
+[data-theme] :is(.skd-card h2, .skd-note h2, .skd-comparison h2, .skd-card dd, .skd-comparison strong) {
+  color: var(--app-text) !important;
+}
+
+[data-theme] :is(.skd-card dt, .skd-comparison span) {
+  color: var(--app-text-muted) !important;
+}
+
+[data-theme] :is(.skd-note p, .skd-comparison p) {
+  color: var(--app-text-soft) !important;
+}
+
+[data-theme="light"] .skd-summary {
+  background: linear-gradient(135deg, #eff6ff, #ffffff) !important;
+  color: #1e3a8a !important;
+}
+
+[data-theme="light"] .skd-summary span {
+  color: #1d4ed8 !important;
+}
+
+[data-theme="light"] .skd-summary strong {
+  color: #0f172a !important;
+}
+
+[data-theme="dark"] .skd-summary {
+  background: linear-gradient(135deg, #0f172a, #111827) !important;
+}
+
+[data-theme] .knowledge-search-results em {
+  min-width: 4.5rem;
+  border-radius: 999px;
+  padding: 0.45rem 0.65rem;
+  background: color-mix(in srgb, var(--app-accent) 18%, var(--app-bg-muted)) !important;
+  color: var(--app-text) !important;
+  text-align: center;
+}
+
+[data-theme="light"] .knowledge-search-results em {
+  background: #dbeafe !important;
+  color: #1e3a8a !important;
+}
+
+[data-theme="dark"] .knowledge-search-results em {
+  background: rgba(59, 130, 246, 0.22) !important;
+  color: #bfdbfe !important;
+}
