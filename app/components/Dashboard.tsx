@@ -67,6 +67,7 @@ const timeFormatter = new Intl.DateTimeFormat("pl-PL", {
 });
 
 const quickActions = [
+  { href: "/cases", label: "Sprawy" },
   { href: "/skd-news", label: "Newsy SKD" },
   { href: "/travel", label: "Podróże" },
   { href: "/react", label: "ReAct" },
@@ -382,6 +383,24 @@ export default function Dashboard() {
               kredytu darmowego i kredycie konsumenckim.
             </p>
             <a href="/skd-news">Otwórz radar SKD →</a>
+          </div>
+        </article>
+
+        <article className="dashboard-card cases-dashboard-card">
+          <header>
+            <div>
+              <p>Bez danych osobowych</p>
+              <h2>Sprawy klientów</h2>
+            </div>
+            <span>Anonimowo</span>
+          </header>
+          <div className="dashboard-skd-news">
+            <strong>Checklisty, statusy i kwoty w jednym miejscu</strong>
+            <p>
+              Prowadź sprawy po numerze roboczym, bez imion, nazwisk, PESEL,
+              telefonu i adresu e-mail.
+            </p>
+            <a href="/cases">Otwórz sprawy →</a>
           </div>
         </article>
 

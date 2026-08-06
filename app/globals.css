@@ -8271,3 +8271,378 @@ h2 {
     flex-direction: column;
   }
 }
+
+/* Anonymous SKD cases */
+.cases-shell {
+  min-height: 100vh;
+  align-items: stretch;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.cases-panel {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  border: 1px solid var(--app-border);
+  border-radius: 24px;
+  background: var(--app-bg-panel);
+  box-shadow: var(--app-shadow);
+  overflow: hidden;
+}
+
+.cases-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--app-border);
+  padding: 26px;
+}
+
+.cases-hero h1 {
+  color: var(--app-text);
+}
+
+.cases-hero p {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: var(--app-text-soft);
+  line-height: 1.6;
+}
+
+.cases-privacy-badge {
+  display: grid;
+  min-width: 220px;
+  gap: 4px;
+  border: 1px solid color-mix(in srgb, #22c55e 38%, var(--app-border));
+  border-radius: 18px;
+  background: color-mix(in srgb, #22c55e 12%, var(--app-bg-muted));
+  padding: 16px;
+}
+
+.cases-privacy-badge strong {
+  color: #22c55e;
+  font-size: 1.15rem;
+}
+
+.cases-privacy-badge span {
+  color: var(--app-text-soft);
+  font-weight: 800;
+}
+
+.cases-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 24px;
+}
+
+.cases-stats article,
+.cases-form,
+.cases-list,
+.cases-detail {
+  border: 1px solid var(--app-border);
+  border-radius: 18px;
+  background: var(--app-bg-muted);
+}
+
+.cases-stats article {
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+}
+
+.cases-stats strong {
+  color: var(--app-text);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.cases-stats span {
+  color: var(--app-text-muted);
+  font-weight: 850;
+}
+
+.cases-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.05fr);
+  gap: 18px;
+  padding: 0 24px 24px;
+}
+
+.cases-form,
+.cases-list,
+.cases-detail {
+  padding: 20px;
+}
+
+.cases-form {
+  display: grid;
+  gap: 16px;
+}
+
+.cases-form h2,
+.cases-list h2,
+.cases-detail h2 {
+  color: var(--app-text);
+}
+
+.cases-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--app-text-soft);
+  font-weight: 900;
+}
+
+.cases-form input,
+.cases-form select,
+.cases-form textarea {
+  width: 100%;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-bg-panel);
+  color: var(--app-text);
+  font: inherit;
+  padding: 12px 14px;
+}
+
+.cases-form textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.cases-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cases-documents {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.cases-documents legend {
+  color: var(--app-text);
+  font-weight: 950;
+  padding: 0 8px;
+}
+
+.cases-documents label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cases-documents input {
+  width: auto;
+}
+
+.cases-warning {
+  margin: 0;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 14px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #fecaca;
+  font-weight: 900;
+  padding: 12px 14px;
+}
+
+[data-theme="light"] .cases-warning {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.cases-actions,
+.cases-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cases-actions button,
+.cases-detail-actions button,
+.cases-list button {
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-bg-panel);
+  color: var(--app-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 950;
+}
+
+.cases-actions button,
+.cases-detail-actions button {
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+.cases-actions button:first-child {
+  border-color: transparent;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #ffffff;
+}
+
+.cases-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.cases-board {
+  display: grid;
+  gap: 16px;
+}
+
+.cases-list {
+  display: grid;
+  gap: 10px;
+}
+
+.cases-list button {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  text-align: left;
+}
+
+.cases-list button.active,
+.cases-list button:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 45%, var(--app-border));
+  background: color-mix(in srgb, var(--app-accent) 14%, var(--app-bg-panel));
+}
+
+.cases-list strong,
+.cases-benefit strong {
+  color: var(--app-text);
+}
+
+.cases-list span,
+.cases-list em,
+.cases-empty,
+.cases-detail p,
+.cases-benefit small,
+.cases-next-step p,
+.cases-note p {
+  color: var(--app-text-soft);
+}
+
+.cases-list em {
+  font-style: normal;
+  font-weight: 850;
+}
+
+.cases-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.cases-detail-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.cases-detail-header span,
+.cases-benefit span {
+  color: var(--app-accent);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cases-benefit,
+.cases-next-step,
+.cases-note {
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: var(--app-bg-panel);
+  padding: 16px;
+}
+
+.cases-benefit {
+  display: grid;
+  gap: 6px;
+}
+
+.cases-benefit strong {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.cases-next-step h3,
+.cases-note h3 {
+  margin: 0 0 8px;
+  color: var(--app-text);
+}
+
+.cases-next-step p,
+.cases-note p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.cases-document-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cases-document-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-bg-panel);
+  color: var(--app-text-soft);
+  font-weight: 850;
+  padding: 12px;
+}
+
+.cases-document-list li.done {
+  border-color: color-mix(in srgb, #22c55e 35%, var(--app-border));
+  color: var(--app-text);
+}
+
+.cases-document-list li span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg-muted));
+  color: var(--app-accent);
+}
+
+[data-theme] .cases-dashboard-card {
+  border-color: color-mix(in srgb, #22c55e 30%, var(--app-border)) !important;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, #22c55e 16%, transparent), transparent 42%),
+    var(--app-bg-panel) !important;
+}
+
+@media (max-width: 920px) {
+  .cases-hero,
+  .cases-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cases-stats,
+  .cases-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cases-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

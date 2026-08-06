@@ -23,6 +23,7 @@ const primaryLinks: NavLink[] = [
   { href: "/history", label: "📜 Historia", match: ["/history"] },
   { href: "/upload", label: "📚 Baza wiedzy" },
   { href: "/skd-news", label: "🗞️ Newsy SKD" },
+  { href: "/cases", label: "📂 Sprawy" },
   { href: "/agent", label: "🤖 Agent" },
   { href: "/skd-calculator", label: "⚖️ Kalkulator SKD" },
   { href: "/briefings", label: "📰 Briefingi" },
