@@ -12,29 +12,52 @@ type NavLink = {
   match?: readonly string[];
 };
 
-const links: NavLink[] = [
+type NavGroup = {
+  items: NavLink[];
+  title: string;
+};
+
+const primaryLinks: NavLink[] = [
   { href: "/", label: "🏠 Dashboard", main: true, match: ["/", "/dashboard"] },
-  { href: "/chat", label: "Chat" },
+  { href: "/chat", label: "💬 Chat" },
   { href: "/history", label: "📜 Historia", match: ["/history"] },
   { href: "/upload", label: "📚 Baza wiedzy" },
-  { href: "/think", label: "Myślenie" },
-  { href: "/fewshot", label: "Słownik" },
-  { href: "/format", label: "Formater" },
-  { href: "/search", label: "Szukaj" },
-  { href: "/generate", label: "Grafiki" },
-  { href: "/vision", label: "Vision" },
-  { href: "/agent", label: "Agent" },
-  { href: "/react", label: "ReAct" },
-  { href: "/travel", label: "Podróże" },
-  { href: "/extract", label: "Analizator" },
-  { href: "/email-triage", label: "📧 E-mail Triage" },
-  { href: "/report", label: "📊 Raporty" },
-  { href: "/meal-planner", label: "🍽️ Posiłki" },
-  { href: "/competitor", label: "🏢 Konkurencja" },
-  { href: "/briefings", label: "📰 Briefingi" },
+  { href: "/agent", label: "🤖 Agent" },
   { href: "/skd-calculator", label: "⚖️ Kalkulator SKD" },
-  { href: "/admin/security", label: "Bezpieczeństwo", match: ["/admin/security"] },
-  { href: "/admin/dashboard", label: "📊 Użycie", match: ["/admin/dashboard"] },
+  { href: "/briefings", label: "📰 Briefingi" },
+];
+
+const navGroups: NavGroup[] = [
+  {
+    title: "Narzędzia",
+    items: [
+      { href: "/think", label: "🧠 Myślenie" },
+      { href: "/fewshot", label: "📖 Słownik" },
+      { href: "/format", label: "🧾 Formater" },
+      { href: "/search", label: "🔎 Szukaj" },
+      { href: "/generate", label: "🎨 Grafiki" },
+      { href: "/vision", label: "👁️ Vision" },
+      { href: "/react", label: "🔄 ReAct" },
+      { href: "/travel", label: "✈️ Podróże" },
+      { href: "/extract", label: "📊 Analizator" },
+      { href: "/meal-planner", label: "🍽️ Posiłki" },
+      { href: "/competitor", label: "🏢 Konkurencja" },
+    ],
+  },
+  {
+    title: "Automatyzacje",
+    items: [
+      { href: "/email-triage", label: "📧 E-mail Triage" },
+      { href: "/report", label: "📊 Raporty" },
+    ],
+  },
+  {
+    title: "Admin",
+    items: [
+      { href: "/admin/security", label: "🛡️ Bezpieczeństwo", match: ["/admin/security"] },
+      { href: "/admin/dashboard", label: "📈 Użycie", match: ["/admin/dashboard"] },
+    ],
+  },
 ];
 
 type TopNavigationProps = {
@@ -49,15 +72,45 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
     setIsOpen(false);
   }, [pathname]);
 
+  const isActiveLink = (link: NavLink) =>
+    link.match
+      ? link.match.some(
+          (path) =>
+            pathname === path || (path !== "/" && pathname.startsWith(`${path}/`)),
+        )
+      : pathname === link.href;
+
+  const renderLink = (link: NavLink) => {
+    const isActive = isActiveLink(link);
+    const linkClass = [
+      "nav-card",
+      isActive ? "active" : "",
+      link.main ? "primary" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return (
+      <a
+        className={linkClass}
+        href={link.href}
+        key={link.href}
+        onClick={() => setIsOpen(false)}
+      >
+        {link.label}
+      </a>
+    );
+  };
+
   return (
     <nav
       className={`top-nav ${className} ${isOpen ? "open" : ""}`.trim()}
       aria-label="Nawigacja"
     >
-      <a className="nav-brand" href="/" aria-label="Agent AI - Centrum dowodzenia">
-        <span className="nav-brand-icon" aria-hidden="true">⚡</span>
+      <a className="nav-brand" href="/" aria-label="Agent SKD - Centrum dowodzenia">
+        <span className="nav-brand-icon" aria-hidden="true">⚖️</span>
         <span className="nav-brand-copy">
-          <strong>Agent AI</strong>
+          <strong>Agent SKD</strong>
           <small>Centrum dowodzenia</small>
         </span>
       </a>
@@ -74,32 +127,28 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
       </button>
 
       <div className="top-nav-links">
-        {links.map((link) => {
-          const isActive = link.match
-            ? link.match.some(
-                (path) =>
-                  pathname === path || (path !== "/" && pathname.startsWith(`${path}/`)),
-              )
-            : pathname === link.href;
-          const linkClass = [
-            isActive ? "active" : "",
-            link.main ? "primary" : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
+        <section className="nav-section nav-section-primary" aria-label="Główne">
+          {primaryLinks.map(renderLink)}
+        </section>
+
+        {navGroups.map((group) => {
+          const hasActiveLink = group.items.some(isActiveLink);
 
           return (
-            <a
-              className={linkClass || undefined}
-              href={link.href}
-              key={link.href}
-              onClick={() => setIsOpen(false)}
-            >
-              {link.label}
-            </a>
+            <details className="nav-drawer" key={group.title} open={hasActiveLink}>
+              <summary>
+                <span>{group.title}</span>
+                <small>{group.items.length}</small>
+              </summary>
+              <div className="nav-drawer-links">{group.items.map(renderLink)}</div>
+            </details>
           );
         })}
-        <ThemeToggle />
+
+        <div className="nav-bottom-actions">
+          <ThemeToggle />
+        </div>
+
         <button
           className="logout-button"
           onClick={() =>
