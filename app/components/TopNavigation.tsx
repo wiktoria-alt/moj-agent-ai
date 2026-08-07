@@ -70,6 +70,10 @@ type TopNavigationProps = {
 export function TopNavigation({ className = "" }: TopNavigationProps) {
   const pathname = usePathname() || "/";
   const [isOpen, setIsOpen] = useState(false);
+  const signOut = () =>
+    void supabase.auth.signOut().then(() => {
+      window.location.href = "/login";
+    });
 
   useEffect(() => {
     setIsOpen(false);
@@ -129,6 +133,14 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
         <span>Menu</span>
       </button>
 
+      <button
+        className="mobile-logout-button"
+        onClick={signOut}
+        type="button"
+      >
+        Wyloguj
+      </button>
+
       <div className="top-nav-links">
         <section className="nav-section nav-section-primary" aria-label="Główne">
           {primaryLinks.map(renderLink)}
@@ -154,11 +166,7 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
 
         <button
           className="logout-button"
-          onClick={() =>
-            void supabase.auth.signOut().then(() => {
-              window.location.href = "/login";
-            })
-          }
+          onClick={signOut}
           type="button"
         >
           Wyloguj
