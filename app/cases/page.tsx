@@ -261,6 +261,8 @@ export default function CasesPage() {
   const [pdfStatus, setPdfStatus] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
+  const [savedNotice, setSavedNotice] = useState("");
+  const formRef = useRef<HTMLFormElement | null>(null);
   const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => setCases(readCases()), []);
@@ -343,8 +345,9 @@ export default function CasesPage() {
   }
 
   function editCase(item: ClientCase) {
-    setDraft(item);
+    setDraft(normalizeCase(item));
     setSelectedCaseId(item.id);
+    setSavedNotice("");
     setDraftCalculator(
       item.calculation?.input ?? {
         ...defaultCalculatorInput,
@@ -357,6 +360,9 @@ export default function CasesPage() {
         paidOutAmount: item.amounts.capital,
       },
     );
+    window.setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   }
 
   function updateSelectedCase(updater: (item: ClientCase) => ClientCase) {
@@ -402,6 +408,10 @@ export default function CasesPage() {
     setSelectedCaseId(item.id);
     setDraft(getEmptyCase());
     setDraftCalculator(defaultCalculatorInput);
+    setSavedNotice(`Sprawa ${item.reference} została zapisana. Formularz jest gotowy na kolejną sprawę.`);
+    window.setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   }
 
   function saveCalculation() {
@@ -523,6 +533,10 @@ export default function CasesPage() {
     if (!window.confirm("Usunąć tę anonimową sprawę z tego urządzenia?")) return;
     setCases((current) => current.filter((item) => item.id !== id));
     if (selectedCaseId === id) setSelectedCaseId(null);
+    if (draft.id === id) {
+      setDraft(getEmptyCase());
+      setDraftCalculator(defaultCalculatorInput);
+    }
   }
 
   return (
@@ -549,8 +563,9 @@ export default function CasesPage() {
         </section>
 
         <section className="cases-layout">
-          <form className="cases-form" onSubmit={saveCase}>
+          <form className="cases-form" onSubmit={saveCase} ref={formRef}>
             <h2>{draft.id ? "Edytuj sprawę" : "Dodaj anonimową sprawę"}</h2>
+            {savedNotice ? <p className="cases-success">{savedNotice}</p> : null}
             <label>
               Numer roboczy / pseudonim
               <input onChange={(event) => updateDraft("reference", event.target.value)} placeholder="Np. SKD-ALIOR-001" value={draft.reference} />
@@ -610,7 +625,7 @@ export default function CasesPage() {
             {personalDataWarnings.length ? <p className="cases-warning">Usuń dane osobowe przed zapisem: {personalDataWarnings.join(", ")}.</p> : null}
             <div className="cases-actions">
               <button disabled={personalDataWarnings.length > 0} type="submit">{draft.id ? "Zapisz sprawę i wynik" : "Dodaj sprawę i zapisz wynik"}</button>
-              {draft.id ? <button onClick={() => { setDraft(getEmptyCase()); setDraftCalculator(defaultCalculatorInput); }} type="button">Anuluj</button> : null}
+              {draft.id ? <button onClick={() => { setDraft(getEmptyCase()); setDraftCalculator(defaultCalculatorInput); setSavedNotice("Edycja anulowana. Formularz jest pusty."); }} type="button">Anuluj</button> : null}
             </div>
           </form>
 
@@ -618,9 +633,17 @@ export default function CasesPage() {
             <div className="cases-list">
               <h2>Lista spraw</h2>
               {cases.length ? cases.map((item) => (
-                <button className={selectedCase?.id === item.id ? "active" : ""} key={item.id} onClick={() => setSelectedCaseId(item.id)} type="button">
-                  <strong>{item.reference}</strong><span>{item.bank || "Bank do uzupełnienia"}</span><em>{statuses.find((status) => status.id === item.status)?.label}</em>
-                </button>
+                <article className={`cases-list-card ${selectedCase?.id === item.id ? "active" : ""}`} key={item.id}>
+                  <button className="cases-list-main" onClick={() => setSelectedCaseId(item.id)} type="button">
+                    <strong>{item.reference}</strong>
+                    <span>{item.bank || "Bank do uzupełnienia"}</span>
+                    <em>{statuses.find((status) => status.id === item.status)?.label}</em>
+                  </button>
+                  <div className="cases-list-actions" aria-label={`Akcje dla sprawy ${item.reference}`}>
+                    <button onClick={() => editCase(item)} type="button">Edytuj</button>
+                    <button onClick={() => deleteCase(item.id)} type="button">Usuń</button>
+                  </div>
+                </article>
               )) : <p className="cases-empty">Dodaj pierwszą sprawę, używając wyłącznie anonimowego oznaczenia.</p>}
             </div>
 

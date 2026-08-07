@@ -8527,6 +8527,22 @@ h2 {
   color: #991b1b;
 }
 
+.cases-success {
+  margin: 0;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 14px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+  font-weight: 900;
+  line-height: 1.45;
+  padding: 12px 14px;
+}
+
+[data-theme="light"] .cases-success {
+  background: #f0fdf4;
+  color: #166534;
+}
+
 .cases-actions,
 .cases-detail-actions {
   display: flex;
@@ -8536,14 +8552,18 @@ h2 {
 
 .cases-actions button,
 .cases-detail-actions button,
-.cases-list button {
+.cases-list button,
+.cases-list-card {
   border: 1px solid var(--app-border);
   border-radius: 14px;
   background: var(--app-bg-panel);
   color: var(--app-text);
-  cursor: pointer;
   font: inherit;
   font-weight: 950;
+}
+
+.cases-list button {
+  cursor: pointer;
 }
 
 .cases-actions button,
@@ -8573,17 +8593,46 @@ h2 {
   gap: 10px;
 }
 
-.cases-list button {
+.cases-list-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px;
+  padding: 10px;
+}
+
+.cases-list-main {
   display: grid;
   gap: 5px;
-  padding: 14px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 4px;
   text-align: left;
 }
 
-.cases-list button.active,
-.cases-list button:hover {
+.cases-list-card.active,
+.cases-list-card:hover {
   border-color: color-mix(in srgb, var(--app-accent) 45%, var(--app-border));
   background: color-mix(in srgb, var(--app-accent) 14%, var(--app-bg-panel));
+}
+
+.cases-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cases-list-actions button {
+  min-height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--app-bg-muted) 72%, var(--app-bg-panel));
+  padding: 0 10px;
+  font-size: 0.82rem;
+}
+
+.cases-list-actions button:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 45%, var(--app-border));
+  color: var(--app-accent);
 }
 
 .cases-list strong,
