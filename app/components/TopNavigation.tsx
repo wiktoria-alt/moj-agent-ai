@@ -141,6 +141,32 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
         Wyloguj
       </button>
 
+      <details className="mobile-nav-menu">
+        <summary>
+          <span>Nawigacja</span>
+          <small>pokaż / ukryj</small>
+        </summary>
+        <div className="mobile-nav-menu-links">
+          <section className="nav-section nav-section-primary" aria-label="Główne">
+            {primaryLinks.map(renderLink)}
+          </section>
+
+          {navGroups.map((group) => (
+            <details className="nav-drawer" key={`mobile-${group.title}`}>
+              <summary>
+                <span>{group.title}</span>
+                <small>{group.items.length}</small>
+              </summary>
+              <div className="nav-drawer-links">{group.items.map(renderLink)}</div>
+            </details>
+          ))}
+
+          <div className="nav-bottom-actions">
+            <ThemeToggle />
+          </div>
+        </div>
+      </details>
+
       <div className="top-nav-links">
         <section className="nav-section nav-section-primary" aria-label="Główne">
           {primaryLinks.map(renderLink)}

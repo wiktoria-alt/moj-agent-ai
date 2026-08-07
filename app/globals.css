@@ -3707,6 +3707,10 @@ h2 {
   display: none;
 }
 
+.mobile-nav-menu {
+  display: none;
+}
+
 .login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 12% 10%, rgba(59, 130, 246, 0.2), transparent 32%), linear-gradient(135deg, #0f172a 0%, #172554 100%); }
 .login-card { width: min(100%, 440px); padding: 38px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; background: rgba(255, 255, 255, 0.96); box-shadow: 0 28px 70px rgba(2, 6, 23, 0.35); }
 .login-brand { display: flex; align-items: center; gap: 9px; color: #111827; font-size: 1.05rem; }
@@ -7696,36 +7700,68 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .nav-toggle {
+    display: none !important;
+  }
+
   .top-nav-links {
     display: none !important;
   }
 
   .top-nav.open .top-nav-links {
+    display: none !important;
+  }
+
+  .mobile-nav-menu {
     width: 100%;
-    display: grid !important;
-    grid-template-columns: 1fr;
+    display: block;
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    background: var(--app-bg-panel);
+    overflow: hidden;
+  }
+
+  .mobile-nav-menu > summary {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    max-height: calc(100svh - 176px);
-    max-height: calc(100dvh - 176px);
+    cursor: pointer;
+    list-style: none;
+    padding: 0 12px;
+    color: var(--app-text);
+    font-weight: 950;
+  }
+
+  .mobile-nav-menu > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-nav-menu > summary small {
+    color: var(--app-text-muted);
+    font-size: 0.75rem;
+    font-weight: 950;
+  }
+
+  .mobile-nav-menu-links {
+    display: grid;
+    gap: 10px;
+    max-height: calc(100svh - 206px);
+    max-height: calc(100dvh - 206px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding-top: 10px;
+    padding: 10px;
     padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-nav-menu:not([open]) .mobile-nav-menu-links {
+    display: none;
   }
 
   .nav-drawer {
     grid-column: 1 / -1;
-  }
-
-  .nav-toggle {
-    min-height: 40px;
-    width: 100%;
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: space-between;
-    border-radius: 12px;
-    font-weight: 950;
   }
 
   .mobile-logout-button {
