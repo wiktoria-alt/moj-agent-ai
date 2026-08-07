@@ -753,11 +753,17 @@ export default function CasesPage() {
                 {selectedCase.analysis ? <span className="case-saved-badge">✓ analiza zapisana</span> : null}
               </header>
               <div className="case-pdf-zone">
-                <input accept="application/pdf,.pdf" aria-label="Dodaj umowę PDF" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void analyzePdf(file); }} ref={pdfInputRef} type="file" />
-                <button disabled={isAnalyzing} onClick={() => pdfInputRef.current?.click()} type="button">{isAnalyzing ? "Analizuję umowę…" : "＋ Dodaj umowę klienta w PDF"}</button>
+                <input accept="application/pdf,.pdf" aria-label={selectedCase.analysis ? "Przeanalizuj ponownie umowę PDF" : "Dodaj umowę PDF"} hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void analyzePdf(file); }} ref={pdfInputRef} type="file" />
+                <button disabled={isAnalyzing} onClick={() => pdfInputRef.current?.click()} type="button">
+                  {isAnalyzing ? "Analizuję umowę…" : selectedCase.analysis ? "↻ Przeanalizuj ponownie PDF" : "＋ Dodaj umowę klienta w PDF"}
+                </button>
                 <div>
-                  <strong>Ochrona danych</strong>
-                  <p>Plik nie jest zapisywany. Tekst jest odczytywany w przeglądarce, typowe dane osobowe są maskowane, a w sprawie zapisuje się tylko raport.</p>
+                  <strong>{selectedCase.analysis ? "Odświeżenie analizy" : "Ochrona danych"}</strong>
+                  <p>
+                    {selectedCase.analysis
+                      ? "Dodaj ten sam PDF jeszcze raz. Nowy raport punkt po punkcie zastąpi starą analizę w tej sprawie."
+                      : "Plik nie jest zapisywany. Tekst jest odczytywany w przeglądarce, typowe dane osobowe są maskowane, a w sprawie zapisuje się tylko raport."}
+                  </p>
                 </div>
               </div>
               {pdfStatus ? <p className="case-analysis-status">{pdfStatus}</p> : null}
