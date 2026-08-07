@@ -88,6 +88,39 @@ const statuses: Array<{ id: CaseStatus; label: string }> = [
   { id: "zamknieta", label: "Zamknięta" },
 ];
 
+const bankOptions = [
+  "Alior",
+  "BNP Paribas",
+  "BOŚ",
+  "BPH",
+  "Cofidis",
+  "Citi Handlowy",
+  "Credit Agricole",
+  "Deutsche Bank",
+  "Eurobank",
+  "Getin Bank",
+  "ING Bank Śląski",
+  "mBank",
+  "Meritum",
+  "Millennium",
+  "Nest Bank",
+  "Pekao",
+  "PKO BP",
+  "Plus Bank",
+  "Pocztowy",
+  "Raiffeisen Bank Polska",
+  "Santander BP",
+  "Santander Consumer",
+  "Santander Financial",
+  "SKOK (np. Kasa Stefczyka)",
+  "Smartney",
+  "Spółdzielcze",
+  "Podkarpacki Bank Spółdzielczy",
+  "Toyota Bank",
+  "Volkswagen Bank",
+  "VeloBank",
+];
+
 const documents: Array<{ id: DocumentKey; label: string }> = [
   { id: "umowa", label: "Umowa kredytu" },
   { id: "formularz", label: "Formularz informacyjny" },
@@ -571,7 +604,14 @@ export default function CasesPage() {
               <input onChange={(event) => updateDraft("reference", event.target.value)} placeholder="Np. SKD-ALIOR-001" value={draft.reference} />
             </label>
             <div className="cases-form-grid">
-              <label>Bank<input onChange={(event) => updateDraft("bank", event.target.value)} placeholder="Np. Alior Bank" value={draft.bank} /></label>
+              <label>
+                Bank
+                <select onChange={(event) => updateDraft("bank", event.target.value)} value={draft.bank}>
+                  <option value="">Wybierz bank</option>
+                  {draft.bank && !bankOptions.includes(draft.bank) ? <option value={draft.bank}>{draft.bank}</option> : null}
+                  {bankOptions.map((bank) => <option key={bank} value={bank}>{bank}</option>)}
+                </select>
+              </label>
               <label>Produkt<input onChange={(event) => updateDraft("product", event.target.value)} value={draft.product} /></label>
             </div>
             <label>
