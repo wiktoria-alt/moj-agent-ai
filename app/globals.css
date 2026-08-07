@@ -7668,9 +7668,33 @@ h2 {
 }
 
 @media (max-width: 720px) {
+  .top-nav {
+    max-height: calc(100svh - 18px);
+    max-height: calc(100dvh - 18px);
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    overflow: hidden;
+  }
+
+  .top-nav.open {
+    position: sticky;
+    top: 8px;
+  }
+
   .nav-section,
   .nav-drawer-links {
     grid-template-columns: 1fr;
+  }
+
+  .top-nav.open .top-nav-links {
+    min-height: 0;
+    max-height: calc(100svh - 132px);
+    max-height: calc(100dvh - 132px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
 
   .nav-drawer {
