@@ -7,7 +7,15 @@ import { googleModelIds } from "../../lib/models";
 export const maxDuration = 60;
 
 const maxContractLength = 90000;
-const maxKnowledgeLength = 24000;
+const maxKnowledgeLength = 60000;
+
+const art30KnowledgeQueries = [
+  "Ustawa o kredycie konsumenckim art. 30 pełna treść wszystkie punkty obowiązki informacyjne umowy",
+  "art. 30 ust. 1 pkt 1 2 3 4 5 6 7 ustawy o kredycie konsumenckim",
+  "art. 30 ust. 1 pkt 8 9 10 11 12 13 ustawy o kredycie konsumenckim",
+  "art. 30 ust. 1 pkt 14 15 16 17 18 19 ustawy o kredycie konsumenckim",
+  "art. 45 sankcja kredytu darmowego naruszenie art. 30 ustawy o kredycie konsumenckim",
+];
 
 function textValue(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -102,12 +110,32 @@ export async function POST(request: Request) {
       );
     }
 
-    let knowledge;
+    let knowledgeResults: Awaited<ReturnType<typeof searchKnowledgeBase>>["results"] = [];
+    let sourceDocuments: string[] = [];
 
     try {
-      knowledge = await searchKnowledgeBase(
-        "Ustawa o kredycie konsumenckim art. 30 ust. 1 pkt obowiązki informacyjne umowy oraz art. 45 sankcja kredytu darmowego",
+      const knowledgeResponses = await Promise.all(
+        art30KnowledgeQueries.map((query) =>
+          searchKnowledgeBase(query, { matchCount: 12, matchThreshold: 0.2 }),
+        ),
       );
+      const seen = new Set<string>();
+
+      for (const response of knowledgeResponses) {
+        sourceDocuments = [...sourceDocuments, ...response.source_documents];
+
+        for (const result of response.results) {
+          const key = `${result.title}\n${result.content}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          knowledgeResults.push(result);
+        }
+      }
+
+      knowledgeResults = knowledgeResults
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 30);
+      sourceDocuments = [...new Set(sourceDocuments)];
     } catch (error) {
       return Response.json(
         {
@@ -120,7 +148,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!knowledge.results.length) {
+    if (!knowledgeResults.length) {
       return Response.json(
         {
           error:
@@ -130,7 +158,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const knowledgeText = knowledge.results
+    const knowledgeText = knowledgeResults
       .map(
         (result, index) =>
           `ŹRÓDŁO ${index + 1}: ${result.title}\n${result.content}`,
@@ -142,14 +170,19 @@ export async function POST(request: Request) {
       maxOutputTokens: 6000,
       maxRetries: 0,
       model: google(googleModelIds.flash),
-      prompt: `Jesteś analitykiem umów kredytu konsumenckiego. Wykonaj ostrożną, wstępną analizę umowy pod kątem obowiązków informacyjnych z art. 30 ustawy o kredycie konsumenckim i możliwego znaczenia dla art. 45 (sankcja kredytu darmowego).
+        prompt: `Jesteś analitykiem umów kredytu konsumenckiego. Wykonaj ostrożną, wstępną analizę umowy pod kątem obowiązków informacyjnych z art. 30 ustawy o kredycie konsumenckim i możliwego znaczenia dla art. 45 (sankcja kredytu darmowego).
 
 WAŻNE ZASADY:
+- Najpierw zapoznaj się z BAZĄ WIEDZY poniżej i wyodrębnij z niej pełną listę punktów art. 30 ust. 1, które są widoczne w źródłach.
 - Podstawą prawną są WYŁĄCZNIE fragmenty z BAZY WIEDZY poniżej.
 - Nie wymyślaj numerów punktów ani treści przepisów. Numer art. 30 ust. 1 pkt podaj tylko wtedy, gdy wynika ze źródła.
-- Brak informacji w odczytanym tekście oznacz jako "nie znaleziono w odczytanym tekście", a nie jako pewne naruszenie.
-- Odróżniaj: "brak", "możliwa niezgodność", "zgodne" i "do ręcznej weryfikacji".
-- Zacytuj krótki fragment umowy przy każdym ustaleniu.
+- W sekcji "Weryfikacja art. 30" wypisz KAŻDY punkt art. 30 ust. 1 znaleziony w bazie wiedzy. Nie pomijaj punktu tylko dlatego, że nie widzisz go w umowie.
+- Dla każdego punktu porównaj wymóg ustawy z odczytanym tekstem umowy.
+- Ocena musi być jedną z wartości: "naruszone", "możliwe naruszenie", "OK", "do ręcznej weryfikacji", "nie znaleziono w odczytanym tekście".
+- "Naruszone" wpisz tylko wtedy, gdy w umowie jest zapis sprzeczny z wymogiem albo brak wymogu jest wyraźnie widoczny po przeszukaniu tekstu.
+- Brak informacji w odczytanym tekście oznacz jako "nie znaleziono w odczytanym tekście" albo "do ręcznej weryfikacji", a nie jako pewne naruszenie.
+- Przy każdym punkcie podaj krótki cytat z ustawy z bazy wiedzy i krótki cytat z umowy. Jeśli cytatu z umowy nie ma, napisz "nie znaleziono".
+- W kolumnie "Dlaczego" wyjaśnij jednym konkretnym zdaniem, na czym polega zgodność, brak albo możliwe naruszenie.
 - Nie przesądzaj, że klientowi przysługuje SKD i nie udzielaj ostatecznej porady prawnej.
 - Nie wypisuj ani nie odtwarzaj danych osobowych.
 
@@ -158,10 +191,10 @@ Zwróć po polsku raport w Markdown w tej strukturze:
 2-4 zdania podsumowania.
 
 ## Weryfikacja art. 30
-Tabela: Przepis/punkt | Wymóg z bazy wiedzy | Co znaleziono w umowie | Ocena
+Tabela: Przepis/punkt | Wymóg z ustawy | Cytat z umowy / brak | Ocena | Dlaczego
 
-## Najważniejsze możliwe naruszenia
-Numerowana lista. Przy każdym: podstawa, fragment umowy, dlaczego wymaga dalszego sprawdzenia.
+## Punkty naruszone albo do ręcznej weryfikacji
+Numerowana lista tylko tych punktów, które mają ocenę "naruszone", "możliwe naruszenie", "do ręcznej weryfikacji" albo "nie znaleziono w odczytanym tekście". Przy każdym wpisz: podstawa, wymóg ustawy, ustalenie z umowy, dlaczego to ma znaczenie dla SKD.
 
 ## Czego nie można potwierdzić
 Lista braków lub elementów nieczytelnych.
@@ -191,7 +224,7 @@ ${contractText}`,
     return Response.json({
       analysis: analysisPart.trim(),
       clientCard: cardPart?.trim() ?? "",
-      sources: knowledge.source_documents,
+      sources: sourceDocuments,
     });
   } catch (error) {
     return Response.json(

@@ -40,6 +40,7 @@ function getKnowledgeSupabase() {
 
 export async function searchKnowledgeBase(
   query: string,
+  options: { matchCount?: number; matchThreshold?: number } = {},
 ): Promise<KnowledgeSearchResponse> {
   const normalizedQuery = query.trim();
 
@@ -55,8 +56,8 @@ export async function searchKnowledgeBase(
   const supabase = getKnowledgeSupabase();
   const queryEmbedding = await createEmbedding(normalizedQuery);
   const { data, error } = await supabase.rpc("match_documents", {
-    match_count: 8,
-    match_threshold: 0.35,
+    match_count: options.matchCount ?? 8,
+    match_threshold: options.matchThreshold ?? 0.35,
     query_embedding: queryEmbedding,
   });
 
