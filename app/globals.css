@@ -7669,17 +7669,19 @@ h2 {
 
 @media (max-width: 720px) {
   .top-nav {
-    max-height: calc(100svh - 18px);
-    max-height: calc(100dvh - 18px);
     display: flex;
     flex-direction: column;
     align-self: stretch;
-    overflow: hidden;
+    max-height: none;
+    overflow: visible;
   }
 
   .top-nav.open {
     position: sticky;
     top: 8px;
+    max-height: calc(100svh - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow: hidden;
   }
 
   .nav-section,
@@ -7688,12 +7690,17 @@ h2 {
   }
 
   .top-nav.open .top-nav-links {
-    min-height: 0;
-    max-height: calc(100svh - 132px);
-    max-height: calc(100dvh - 132px);
+    width: 100%;
+    min-height: 240px;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    max-height: calc(100svh - 124px);
+    max-height: calc(100dvh - 124px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    padding-top: 10px;
     padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
 
