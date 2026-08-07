@@ -28,6 +28,15 @@ const forbiddenInputPatterns = [
   /translate\s*your\s*prompt/iu,
 ];
 
+const dataExfiltrationInputPatterns = [
+  /(?:show|give|list|export|dump|download|print|send|reveal|extract|exfiltrate).{0,80}(?:user\s*data|users?|emails?|e-mails?|database|db|tables?|rows?|records?|message[_\s-]*logs?|api[_\s-]*usage|conversation\s*history|all\s*conversations?|tokens?|profiles?|private\s*data|customer\s*data|client\s*data|cases?|documents?|briefings)/iu,
+  /(?:poka[zż]|podaj|wypisz|wyeksportuj|eksportuj|zrzuc|zrzuć|pobierz|sciagnij|ściągnij|wydrukuj|ujawnij|wyslij|wyślij|wyciagnij|wyciągnij).{0,90}(?:dane\s*uzytkownik(?:a|ow)|dane\s+użytkownik(?:a|ów)|uzytkownik(?:a|ow)|użytkownik(?:a|ów)|maile|e-maile|emaile|adresy\s*e-mail|baze|bazę|bazy|tabele|tabelę|rekordy?|wiadomosci|wiadomości|historie\s*rozmow|historię\s*rozmów|wszystkie\s*rozmowy|tokeny?|profile|dane\s*klient(?:a|ow|ów)|sprawy\s*klient(?:a|ow|ów)|briefingi|dokumenty)/iu,
+  /(?:all|full|complete)\s+(?:user\s*data|database|db|message\s*logs|conversation\s*history|private\s*data|customer\s*data|client\s*data)/iu,
+  /(?:cala|cała|pelna|pełna|wszystkie)\s+(?:baza|bazę|dane|wiadomosci|wiadomości|rozmowy|logi|rekordy|maile|emaile)/iu,
+  /\bselect\s+\*\s+from\s+(?:auth\.users|users|profiles|user_profiles|message_logs|api_usage|conversations?|cases?|documents?|briefings)\b/iu,
+  /(?:cudze|innych\s+uzytkownik(?:ow|ow)|innych\s+użytkownik(?:ów|ow)|other\s+users?).{0,70}(?:dane|wiadomosci|wiadomości|rozmowy|maile|emails?|cases?|sprawy|documents?|dokumenty)/iu,
+];
+
 const forbiddenOutputPatterns = [
   /system\s*prompt/iu,
   /\bapi[\s_-]*key\b/iu,
@@ -35,12 +44,14 @@ const forbiddenOutputPatterns = [
   /\bsupabase[\s_-]*(?:anon|service[\s_-]*role)[\s_-]*key\b/iu,
   /\bgoogle[\s_-]*generative[\s_-]*ai[\s_-]*api[\s_-]*key\b/iu,
   /\bprocess\.env\b/iu,
-  /\b(?:message_logs|user_profiles|webhook_events)\b/iu,
+  /\b(?:message_logs|user_profiles|webhook_events|api_usage|auth\.users)\b/iu,
+  /(?:lista|wykaz|export|zrzut|dump).{0,80}(?:uzytkownik|użytkownik|mail|email|rozmow|rozmów|wiadomosci|wiadomości|danych|bazy)/iu,
+  /(?:user\s*data|database\s*dump|message\s*logs|conversation\s*history|private\s*data|customer\s*data|client\s*data)/iu,
 ];
 
 type InputValidation =
   | { ok: true; value: string }
-  | { ok: false; reason: "forbidden-content" | "too-long" };
+  | { ok: false; reason: "forbidden-content" | "data-exfiltration" | "too-long" };
 
 type RateLimitResult =
   | { allowed: true; remaining: number }
@@ -68,6 +79,10 @@ export function validateInput(value: string): InputValidation {
   }
 
   const sanitized = sanitizeInput(value);
+  if (dataExfiltrationInputPatterns.some((pattern) => pattern.test(sanitized))) {
+    return { ok: false, reason: "data-exfiltration" };
+  }
+
   if (forbiddenInputPatterns.some((pattern) => pattern.test(sanitized))) {
     return { ok: false, reason: "forbidden-content" };
   }
