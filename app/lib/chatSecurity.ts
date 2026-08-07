@@ -15,8 +15,12 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1_000;
 
 const forbiddenInputPatterns = [
   /ignore\s*previous/iu,
-  /system\s*prompt/iu,
+  /syst[e]?m\s*prompt/iu,
+  /prompt\s*systemow(?:y|ego|e|ą|a)?/iu,
+  /(?:poka[zż]|podaj|ujawnij|wyświetl|zdradź).{0,40}(?:prompt|instrukcj)/iu,
+  /(?:ukryt|tajne|wewn[eę]trzn).{0,40}instrukcj/iu,
   /ignore\s*instructions/iu,
+  /(?:zignoruj|olej|pomi[nń]).{0,40}(?:instrukcj|zasad|ogranicze[nń])/iu,
   /\breveal\b/iu,
   /show\s*me\s*your/iu,
   /translate\s*your\s*prompt/iu,
