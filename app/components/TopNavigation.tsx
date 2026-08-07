@@ -129,8 +129,8 @@ export function TopNavigation({ className = "" }: TopNavigationProps) {
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <span aria-hidden="true">☰</span>
-        <span>Menu</span>
+        <span aria-hidden="true">{isOpen ? "×" : "☰"}</span>
+        <span>{isOpen ? "Zamknij" : "Nawigacja"}</span>
       </button>
 
       <button
