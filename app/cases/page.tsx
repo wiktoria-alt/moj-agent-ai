@@ -50,6 +50,7 @@ type SavedCalculation = {
 
 type ContractAnalysis = {
   analyzedAt: string;
+  clientCard?: string;
   fileLabel: string;
   pages: number;
   report: string;
@@ -259,6 +260,7 @@ export default function CasesPage() {
   const [pdfError, setPdfError] = useState("");
   const [pdfStatus, setPdfStatus] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGeneratingCard, setIsGeneratingCard] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => setCases(readCases()), []);
@@ -435,6 +437,7 @@ export default function CasesPage() {
       const response = await fetch("/api/analyze-skd-contract", {
         body: JSON.stringify({
           bank: selectedCase.bank,
+          calculationSummary: `Wstępna wartość korzyści: ${formatMoney(calculatorResult.estimatedClaim)}; kwota kredytu: ${calculator.contractAmount || "brak"}; kapitał wypłacony: ${calculator.paidOutAmount || "brak"}; okres: ${calculator.months || "brak"} miesięcy; RRSO: ${calculator.rrso || "brak"}%.`,
           contractText: redactContractText(extracted.text),
           product: selectedCase.product,
         }),
@@ -443,6 +446,7 @@ export default function CasesPage() {
       });
       const data = (await response.json()) as {
         analysis?: string;
+        clientCard?: string;
         error?: string;
         sources?: string[];
       };
@@ -455,6 +459,7 @@ export default function CasesPage() {
         ...item,
         analysis: {
           analyzedAt,
+          clientCard: data.clientCard ?? "",
           fileLabel: "Umowa PDF — nazwa pliku nie została zapisana",
           pages: extracted.pages,
           report: data.analysis ?? "",
@@ -470,6 +475,47 @@ export default function CasesPage() {
     } finally {
       setIsAnalyzing(false);
       if (pdfInputRef.current) pdfInputRef.current.value = "";
+    }
+  }
+
+  async function generateClientCard() {
+    if (!selectedCase?.analysis) return;
+    setPdfError("");
+    setIsGeneratingCard(true);
+
+    try {
+      const response = await fetch("/api/analyze-skd-contract", {
+        body: JSON.stringify({
+          bank: selectedCase.bank,
+          calculationSummary: `Wstępna wartość korzyści: ${formatMoney(selectedCase.calculation?.result.estimatedClaim ?? 0)}; kwota kredytu: ${selectedCase.calculation?.input.contractAmount || "brak"}; kapitał wypłacony: ${selectedCase.calculation?.input.paidOutAmount || "brak"}; okres: ${selectedCase.calculation?.input.months || "brak"} miesięcy; RRSO: ${selectedCase.calculation?.input.rrso || "brak"}%.`,
+          existingAnalysis: selectedCase.analysis.report,
+          product: selectedCase.product,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const data = (await response.json()) as {
+        clientCard?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.clientCard) {
+        throw new Error(data.error || "Nie udało się przygotować fiszki klienta.");
+      }
+
+      updateSelectedCase((item) => ({
+        ...item,
+        analysis: item.analysis
+          ? { ...item.analysis, clientCard: data.clientCard }
+          : null,
+      }));
+    } catch (error) {
+      setPdfError(
+        error instanceof Error
+          ? error.message
+          : "Nie udało się przygotować fiszki klienta.",
+      );
+    } finally {
+      setIsGeneratingCard(false);
     }
   }
 
@@ -654,15 +700,42 @@ export default function CasesPage() {
               {pdfStatus ? <p className="case-analysis-status">{pdfStatus}</p> : null}
               {pdfError ? <p className="cases-warning">{pdfError}</p> : null}
               {selectedCase.analysis ? (
-                <section className="case-analysis-report">
-                  <div className="case-analysis-meta">
-                    <span>{selectedCase.analysis.fileLabel}</span>
-                    <span>{selectedCase.analysis.pages} str.</span>
-                    <span>{new Date(selectedCase.analysis.analyzedAt).toLocaleString("pl-PL")}</span>
-                  </div>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedCase.analysis.report}</ReactMarkdown>
-                  <footer><strong>Źródła z bazy wiedzy:</strong> {selectedCase.analysis.sources.join(", ") || "brak nazw źródeł"}</footer>
-                </section>
+                <>
+                  <section className="case-analysis-report">
+                    <div className="case-analysis-meta">
+                      <span>{selectedCase.analysis.fileLabel}</span>
+                      <span>{selectedCase.analysis.pages} str.</span>
+                      <span>{new Date(selectedCase.analysis.analyzedAt).toLocaleString("pl-PL")}</span>
+                    </div>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedCase.analysis.report}</ReactMarkdown>
+                    <footer><strong>Źródła z bazy wiedzy:</strong> {selectedCase.analysis.sources.join(", ") || "brak nazw źródeł"}</footer>
+                  </section>
+
+                  {selectedCase.analysis.clientCard ? (
+                    <section className="case-client-card" aria-label="Fiszka klienta">
+                      <header>
+                        <div>
+                          <p className="eyebrow">Podsumowanie gotowe do rozmowy</p>
+                          <h2>🗂️ Fiszka klienta — {selectedCase.reference}</h2>
+                        </div>
+                        <span>bez danych osobowych</span>
+                      </header>
+                      <div className="case-client-card-content">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedCase.analysis.clientCard}</ReactMarkdown>
+                      </div>
+                    </section>
+                  ) : (
+                    <section className="case-client-card-empty">
+                      <div>
+                        <h3>🗂️ Dodaj fiszkę do tej analizy</h3>
+                        <p>Ta sprawa została przeanalizowana przed dodaniem fiszek. Możesz utworzyć ją teraz z zapisanego raportu i kalkulacji.</p>
+                      </div>
+                      <button disabled={isGeneratingCard} onClick={() => void generateClientCard()} type="button">
+                        {isGeneratingCard ? "Przygotowuję fiszkę…" : "Wygeneruj fiszkę klienta"}
+                      </button>
+                    </section>
+                  )}
+                </>
               ) : <p className="cases-empty">Dodaj PDF. Agent porówna odczytaną umowę z art. 30 zapisanym w bazie wiedzy i wskaże elementy do ręcznej weryfikacji.</p>}
             </article>
           </section>

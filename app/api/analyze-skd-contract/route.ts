@@ -13,6 +13,47 @@ function textValue(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
+function clientCardPrompt(
+  analysis: string,
+  bank: string,
+  product: string,
+  calculationSummary: string,
+) {
+  return `Przygotuj po polsku prostą fiszkę dla klienta na podstawie raportu SKD i kalkulacji.
+
+Zasady:
+- Nie dodawaj nowych naruszeń ani faktów, których nie ma w raporcie.
+- Nie przesądzaj prawa do SKD ani wygranej.
+- Nie używaj danych osobowych.
+- Pisz prostym językiem, zrozumiałym dla osoby bez wiedzy prawnej.
+
+Struktura Markdown:
+## Najważniejsze informacje o sprawie
+4-6 krótkich punktów: rodzaj umowy, etap, wynik kalkulacji i najważniejsze ustalenia.
+
+## Możliwe błędy w umowie
+Każdy błąd opisz jednym prostym zdaniem i dodaj podstawę z raportu. Element niepewny nazwij "do potwierdzenia".
+
+## Co klient powinien teraz przygotować
+Krótka lista dokumentów lub informacji.
+
+## Pytania i odpowiedzi klienta
+Przygotuj 6-8 par w formacie:
+### Pytanie
+Odpowiedź w 2-4 prostych zdaniach.
+Uwzględnij: co wykryto, czy SKD jest pewne, co oznacza wynik kalkulatora, jakie dokumenty są potrzebne, co może odpowiedzieć bank i jaki jest kolejny krok.
+
+## Ważne zastrzeżenie
+Jedno krótkie zdanie, że to wstępna analiza wymagająca potwierdzenia przez specjalistę.
+
+Bank: ${bank}
+Produkt: ${product}
+Kalkulacja: ${calculationSummary}
+
+RAPORT:
+${analysis}`;
+}
+
 export async function POST(request: Request) {
   try {
     if (!process.env.GOOGLE_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
@@ -24,12 +65,35 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as {
       bank?: unknown;
+      calculationSummary?: unknown;
       contractText?: unknown;
+      existingAnalysis?: unknown;
       product?: unknown;
     };
     const contractText = textValue(body.contractText, maxContractLength);
+    const existingAnalysis = textValue(body.existingAnalysis, 30000);
+    const calculationSummary =
+      textValue(body.calculationSummary, 2000) || "brak zapisanej kalkulacji";
     const bank = textValue(body.bank, 120) || "nie podano";
     const product = textValue(body.product, 120) || "kredyt konsumencki";
+
+    if (existingAnalysis.length >= 100 && contractText.length < 100) {
+      const cardResult = await generateText({
+        maxOutputTokens: 2200,
+        maxRetries: 0,
+        model: google(googleModelIds.flash),
+        prompt: clientCardPrompt(
+          existingAnalysis,
+          bank,
+          product,
+          calculationSummary,
+        ),
+        temperature: 0.15,
+        timeout: { totalMs: 45000 },
+      });
+
+      return Response.json({ clientCard: cardResult.text.trim() });
+    }
 
     if (contractText.length < 100) {
       return Response.json(
@@ -75,7 +139,7 @@ export async function POST(request: Request) {
       .slice(0, maxKnowledgeLength);
 
     const result = await generateText({
-      maxOutputTokens: 4200,
+      maxOutputTokens: 6000,
       maxRetries: 0,
       model: google(googleModelIds.flash),
       prompt: `Jesteś analitykiem umów kredytu konsumenckiego. Wykonaj ostrożną, wstępną analizę umowy pod kątem obowiązków informacyjnych z art. 30 ustawy o kredycie konsumenckim i możliwego znaczenia dla art. 45 (sankcja kredytu darmowego).
@@ -105,9 +169,13 @@ Lista braków lub elementów nieczytelnych.
 ## Następne kroki
 Krótka praktyczna checklista dokumentów i kontroli przez prawnika/specjalistę.
 
+Następnie wpisz dokładnie znacznik [[FISZKA_KLIENTA]] i przygotuj fiszkę według tych samych zasad oraz struktury co w instrukcji poniżej:
+${clientCardPrompt("Użyj ustaleń z raportu utworzonego powyżej.", bank, product, calculationSummary)}
+
 KONTEKST SPRAWY:
 Bank: ${bank}
 Produkt: ${product}
+Kalkulacja: ${calculationSummary}
 
 BAZA WIEDZY:
 ${knowledgeText}
@@ -118,8 +186,11 @@ ${contractText}`,
       timeout: { totalMs: 55000 },
     });
 
+    const [analysisPart, cardPart] = result.text.split("[[FISZKA_KLIENTA]]");
+
     return Response.json({
-      analysis: result.text.trim(),
+      analysis: analysisPart.trim(),
+      clientCard: cardPart?.trim() ?? "",
       sources: knowledge.source_documents,
     });
   } catch (error) {
