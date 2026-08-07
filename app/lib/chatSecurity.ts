@@ -34,6 +34,8 @@ const dataExfiltrationInputPatterns = [
   /(?:all|full|complete)\s+(?:user\s*data|database|db|message\s*logs|conversation\s*history|private\s*data|customer\s*data|client\s*data)/iu,
   /(?:cala|cała|pelna|pełna|wszystkie)\s+(?:baza|bazę|dane|wiadomosci|wiadomości|rozmowy|logi|rekordy|maile|emaile)/iu,
   /\bselect\s+\*\s+from\s+(?:auth\.users|users|profiles|user_profiles|message_logs|api_usage|conversations?|cases?|documents?|briefings)\b/iu,
+  /\b(?:my|mine|other|others|all|users?|jaki|jakie|moj|mój|inne|innych|wszyscy|wszystkie).{0,60}user[_\s-]*id\b/iu,
+  /\buser[_\s-]*id\b.{0,60}(?:other|others|all|users?|inne|innych|wszyscy|wszystkie|baza|bazie|database|db)/iu,
   /(?:cudze|innych\s+uzytkownik(?:ow|ow)|innych\s+użytkownik(?:ów|ow)|other\s+users?).{0,70}(?:dane|wiadomosci|wiadomości|rozmowy|maile|emails?|cases?|sprawy|documents?|dokumenty)/iu,
 ];
 
@@ -58,6 +60,12 @@ const forbiddenOutputPatterns = [
   /\b(?:message_logs|user_profiles|webhook_events|api_usage|auth\.users)\b/iu,
   /(?:lista|wykaz|export|zrzut|dump).{0,80}(?:uzytkownik|użytkownik|mail|email|rozmow|rozmów|wiadomosci|wiadomości|danych|bazy)/iu,
   /(?:user\s*data|database\s*dump|message\s*logs|conversation\s*history|private\s*data|customer\s*data|client\s*data)/iu,
+];
+
+const costExplosionExtraInputPatterns = [
+  /(?:petla|pętla|loop).{0,80}(?:token|koszt|cost|w\s*kolko|w\s*kółko|to\s*samo|same\s*thing|repeat)/iu,
+  /(?:pytaj|ask).{0,80}(?:w\s*kolko|w\s*kółko|ciagle|ciągle|bez\s+konca|bez\s+końca|to\s*samo|same\s*thing)/iu,
+  /(?:ile|how\s*many).{0,50}(?:tokenow|tokenów|tokens?).{0,80}(?:zuzyje|zużyje|use|spend|loop|petla|pętla|w\s*kolko|w\s*kółko)/iu,
 ];
 
 type InputValidation =
@@ -101,7 +109,10 @@ export function validateInput(value: string): InputValidation {
     return { ok: false, reason: "data-exfiltration" };
   }
 
-  if (costExplosionInputPatterns.some((pattern) => pattern.test(sanitized))) {
+  if (
+    costExplosionInputPatterns.some((pattern) => pattern.test(sanitized)) ||
+    costExplosionExtraInputPatterns.some((pattern) => pattern.test(sanitized))
+  ) {
     return { ok: false, reason: "cost-explosion" };
   }
 
