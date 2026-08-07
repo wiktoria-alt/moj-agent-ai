@@ -20,6 +20,8 @@ const forbiddenInputPatterns = [
   /(?:poka[zż]|podaj|ujawnij|wyświetl|zdradź).{0,40}(?:prompt|instrukcj)/iu,
   /(?:ukryt|tajne|wewn[eę]trzn).{0,40}instrukcj/iu,
   /ignore\s*instructions/iu,
+  /(?:show|give|reveal|display|print|tell).{0,40}(?:instruction|instructions|developer\s*message|system\s*message)/iu,
+  /(?:hidden|internal|secret|developer|system).{0,40}(?:instruction|instructions|message|messages)/iu,
   /(?:zignoruj|olej|pomi[nń]).{0,40}(?:instrukcj|zasad|ogranicze[nń])/iu,
   /\breveal\b/iu,
   /show\s*me\s*your/iu,
