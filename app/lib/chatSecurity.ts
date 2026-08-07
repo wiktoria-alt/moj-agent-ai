@@ -37,6 +37,17 @@ const dataExfiltrationInputPatterns = [
   /(?:cudze|innych\s+uzytkownik(?:ow|ow)|innych\s+użytkownik(?:ów|ow)|other\s+users?).{0,70}(?:dane|wiadomosci|wiadomości|rozmowy|maile|emails?|cases?|sprawy|documents?|dokumenty)/iu,
 ];
 
+const costExplosionInputPatterns = [
+  /(?:write|generate|create|produce|print|output|send).{0,60}(?:1000|10\s*000|10000|100\s*000|100000|million|1\s*000\s*000|one\s*million).{0,40}(?:words?|tokens?|characters?|lines?|paragraphs?|pages?|messages?)/iu,
+  /(?:napisz|wygeneruj|stworz|stwórz|wypisz|drukuj|wyslij|wyślij).{0,60}(?:1000|10\s*000|10000|100\s*000|100000|milion|1\s*000\s*000).{0,40}(?:slow|słów|tokenow|tokenów|znakow|znaków|linijek|akapitow|akapitów|stron|wiadomosci|wiadomości)/iu,
+  /(?:repeat|continue|loop|run|think|generate).{0,50}(?:forever|indefinitely|without\s*stopping|until\s*(?:you\s*)?(?:hit|reach)\s*(?:the\s*)?(?:limit|max)|as\s*long\s*as\s*possible)/iu,
+  /(?:powtarzaj|kontynuuj|generuj|pisz|dzialaj|działaj|mysl|myśl).{0,60}(?:bez\s+konca|bez\s+końca|w\s+nieskonczonosc|w\s+nieskończoność|dopoki\s+sie\s+da|dopóki\s+się\s+da|az\s+do\s+limitu|aż\s+do\s+limitu|maksymalnie\s+dlugo|maksymalnie\s+długo)/iu,
+  /(?:use|spend|consume|max(?:imize)?).{0,50}(?:all|maximum|max).{0,30}(?:tokens?|context|quota|budget|credits?)/iu,
+  /(?:zuzyj|zużyj|wykorzystaj|wydaj|spal).{0,50}(?:wszystkie|caly|cały|maksymaln).{0,30}(?:tokeny|kontekst|limit|budzet|budżet|kredyty)/iu,
+  /(?:token\s*burn|cost\s*explosion|infinite\s*loop|fork\s*bomb|denial\s*of\s*wallet|wallet\s*attack)/iu,
+  /(?:atak\s+kosztowy|nabij\s+koszty|nabijanie\s+kosztow|nabijanie\s+kosztów|petla\s+nieskonczona|pętla\s+nieskończona)/iu,
+];
+
 const forbiddenOutputPatterns = [
   /system\s*prompt/iu,
   /\bapi[\s_-]*key\b/iu,
@@ -51,7 +62,14 @@ const forbiddenOutputPatterns = [
 
 type InputValidation =
   | { ok: true; value: string }
-  | { ok: false; reason: "forbidden-content" | "data-exfiltration" | "too-long" };
+  | {
+      ok: false;
+      reason:
+        | "forbidden-content"
+        | "data-exfiltration"
+        | "cost-explosion"
+        | "too-long";
+    };
 
 type RateLimitResult =
   | { allowed: true; remaining: number }
@@ -81,6 +99,10 @@ export function validateInput(value: string): InputValidation {
   const sanitized = sanitizeInput(value);
   if (dataExfiltrationInputPatterns.some((pattern) => pattern.test(sanitized))) {
     return { ok: false, reason: "data-exfiltration" };
+  }
+
+  if (costExplosionInputPatterns.some((pattern) => pattern.test(sanitized))) {
+    return { ok: false, reason: "cost-explosion" };
   }
 
   if (forbiddenInputPatterns.some((pattern) => pattern.test(sanitized))) {
