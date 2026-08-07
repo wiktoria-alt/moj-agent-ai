@@ -301,7 +301,7 @@ export default function CasesPage() {
   useEffect(() => setCases(readCases()), []);
   useEffect(() => window.localStorage.setItem(storageKey, JSON.stringify(cases)), [cases]);
 
-  const selectedCase = cases.find((item) => item.id === selectedCaseId) ?? cases[0] ?? null;
+  const selectedCase = cases.find((item) => item.id === selectedCaseId) ?? null;
 
   useEffect(() => {
     if (!selectedCase) {
@@ -438,7 +438,7 @@ export default function CasesPage() {
         ? current.map((existing) => (existing.id === item.id ? item : existing))
         : [item, ...current],
     );
-    setSelectedCaseId(item.id);
+    setSelectedCaseId(null);
     setDraft(getEmptyCase());
     setDraftCalculator(defaultCalculatorInput);
     setSavedNotice(`Sprawa ${item.reference} została zapisana. Formularz jest gotowy na kolejną sprawę.`);

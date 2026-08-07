@@ -19,6 +19,7 @@ export type KnowledgeSearchResponse = {
 
 type MatchDocumentRow = {
   content?: unknown;
+  created_at?: unknown;
   id?: unknown;
   metadata?: unknown;
   similarity?: unknown;
@@ -36,6 +37,64 @@ function getKnowledgeSupabase() {
   }
 
   return publicSupabase;
+}
+
+function normalizeMetadata(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function getChunkIndex(metadata: Record<string, unknown>) {
+  return typeof metadata.chunk_index === "number" ? metadata.chunk_index : 0;
+}
+
+export async function getKnowledgeDocumentsByTitle(
+  titlePatterns: string[],
+  limit = 120,
+): Promise<KnowledgeSearchResponse> {
+  const supabase = getKnowledgeSupabase();
+  const results: KnowledgeSearchResult[] = [];
+  const seen = new Set<string>();
+
+  for (const pattern of titlePatterns) {
+    const { data, error } = await supabase
+      .from("documents")
+      .select("title, content, metadata, created_at")
+      .ilike("title", pattern)
+      .limit(limit);
+
+    if (error) {
+      throw new Error(`Nie udało się pobrać dokumentu z bazy wiedzy: ${error.message}`);
+    }
+
+    for (const row of (Array.isArray(data) ? data : []) as MatchDocumentRow[]) {
+      const content = typeof row.content === "string" ? row.content : "";
+      const title = typeof row.title === "string" ? row.title : "Bez tytułu";
+      const key = `${title}\n${content}`;
+
+      if (!content || seen.has(key)) continue;
+      seen.add(key);
+      results.push({
+        added_at: typeof row.created_at === "string" ? row.created_at : null,
+        content,
+        metadata: normalizeMetadata(row.metadata),
+        similarity: 1,
+        title,
+      });
+    }
+  }
+
+  results.sort((a, b) => {
+    const titleCompare = a.title.localeCompare(b.title, "pl");
+    return titleCompare || getChunkIndex(a.metadata) - getChunkIndex(b.metadata);
+  });
+
+  return {
+    results,
+    source_documents: [...new Set(results.map((result) => result.title))],
+    total_found: results.length,
+  };
 }
 
 export async function searchKnowledgeBase(

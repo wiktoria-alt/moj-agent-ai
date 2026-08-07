@@ -1,7 +1,10 @@
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 import { getModelErrorMessage } from "../../lib/errors";
-import { searchKnowledgeBase } from "../../lib/knowledgeSearch";
+import {
+  getKnowledgeDocumentsByTitle,
+  searchKnowledgeBase,
+} from "../../lib/knowledgeSearch";
 import { googleModelIds } from "../../lib/models";
 
 export const maxDuration = 60;
@@ -16,6 +19,20 @@ const art30KnowledgeQueries = [
   "art. 30 ust. 1 pkt 14 15 16 17 18 19 ustawy o kredycie konsumenckim",
   "art. 45 sankcja kredytu darmowego naruszenie art. 30 ustawy o kredycie konsumenckim",
 ];
+
+function articleWindow(text: string, article: number, nextArticle: number) {
+  const start = text.search(new RegExp(`\\bArt\\.?\\s*${article}\\b`, "i"));
+
+  if (start < 0) return "";
+
+  const rest = text.slice(start);
+  const next = rest.search(new RegExp(`\\bArt\\.?\\s*${nextArticle}\\b`, "i"));
+  return (next > 0 ? rest.slice(0, next) : rest).trim();
+}
+
+function compactText(value: string) {
+  return value.replace(/\r/g, "\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
 
 function textValue(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -114,14 +131,65 @@ export async function POST(request: Request) {
     let sourceDocuments: string[] = [];
 
     try {
-      const knowledgeResponses = await Promise.all(
+      const [documentKnowledge, ...knowledgeResponses] = await Promise.all([
+        getKnowledgeDocumentsByTitle([
+          "%kredycie konsumenckim%",
+          "%kredytu konsumenckiego%",
+          "%Ustawa z 12.05.2011%",
+        ]),
+        ...art30KnowledgeQueries.map((query) =>
+          searchKnowledgeBase(query, { matchCount: 12, matchThreshold: 0.2 }),
+        ),
+      ]);
+      const fullLawText = compactText(
+        documentKnowledge.results.map((result) => result.content).join("\n\n"),
+      );
+      const article30Text = articleWindow(fullLawText, 30, 31);
+      const article45Text = articleWindow(fullLawText, 45, 46);
+      const exactLawResults = [
+        article30Text
+          ? {
+              added_at: documentKnowledge.results[0]?.added_at ?? null,
+              content: article30Text,
+              metadata: { source: "art. 30", priority: "exact" },
+              similarity: 2,
+              title: "Ustawa o kredycie konsumenckim - art. 30",
+            }
+          : null,
+        article45Text
+          ? {
+              added_at: documentKnowledge.results[0]?.added_at ?? null,
+              content: article45Text,
+              metadata: { source: "art. 45", priority: "exact" },
+              similarity: 2,
+              title: "Ustawa o kredycie konsumenckim - art. 45",
+            }
+          : null,
+      ].filter((result): result is NonNullable<typeof result> => result !== null);
+
+      const allKnowledgeResponses = [
+        {
+          results: exactLawResults,
+          source_documents: [
+            ...documentKnowledge.source_documents,
+            ...exactLawResults.map((result) => result.title),
+          ],
+          total_found: exactLawResults.length,
+        },
+        ...knowledgeResponses,
+      ];
+
+      if (!article30Text) {
+        const fallback = await Promise.all(
         art30KnowledgeQueries.map((query) =>
           searchKnowledgeBase(query, { matchCount: 12, matchThreshold: 0.2 }),
         ),
       );
+        allKnowledgeResponses.push(...fallback);
+      }
       const seen = new Set<string>();
 
-      for (const response of knowledgeResponses) {
+      for (const response of allKnowledgeResponses) {
         sourceDocuments = [...sourceDocuments, ...response.source_documents];
 
         for (const result of response.results) {
