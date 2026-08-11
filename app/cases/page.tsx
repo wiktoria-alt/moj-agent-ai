@@ -227,6 +227,70 @@ function redactContractText(value: string) {
     .replace(/((?:nr|numer)\s+(?:dowodu|dokumentu tożsamości)\s*[:\-]?\s*)[A-Z0-9]+/gi, "$1[USUNIĘTO]");
 }
 
+function firstMatch(value: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (match?.[1]) return match[1].trim();
+  }
+
+  return "";
+}
+
+function normalizeMoneyInput(value: string) {
+  return value.replace(/\s/g, "").replace(/[^\d,.]/g, "").replace(".", ",");
+}
+
+function inferDraftDataFromContractText(text: string) {
+  const normalized = text.replace(/\s+/g, " ");
+  const lower = normalized.toLowerCase();
+  const bank = bankOptions.find((option) => lower.includes(option.toLowerCase()));
+  const contractAmount = normalizeMoneyInput(
+    firstMatch(normalized, [
+      /całkowita\s+kwota\s+kredytu[^0-9]{0,80}([\d\s]+[,.]\d{2})/i,
+      /kwota\s+kredytu[^0-9]{0,80}([\d\s]+[,.]\d{2})/i,
+    ]),
+  );
+  const paidOutAmount = normalizeMoneyInput(
+    firstMatch(normalized, [
+      /kwota\s+oddana\s+do\s+dyspozycji[^0-9]{0,80}([\d\s]+[,.]\d{2})/i,
+      /wypłacon\w*[^0-9]{0,80}([\d\s]+[,.]\d{2})/i,
+    ]),
+  );
+  const commission = normalizeMoneyInput(
+    firstMatch(normalized, [/prowizj\w*[^0-9]{0,80}([\d\s]+[,.]\d{2})/i]),
+  );
+  const insurance = normalizeMoneyInput(
+    firstMatch(normalized, [/ubezpieczen\w*[^0-9]{0,80}([\d\s]+[,.]\d{2})/i]),
+  );
+  const rrso = firstMatch(normalized, [/RRSO[^0-9]{0,50}([\d\s]+[,.]?\d*)\s*%/i]);
+  const interestRate = firstMatch(normalized, [
+    /oprocentowanie\s+nominalne[^0-9]{0,60}([\d\s]+[,.]?\d*)\s*%/i,
+    /stopa\s+oprocentowania[^0-9]{0,60}([\d\s]+[,.]?\d*)\s*%/i,
+  ]);
+  const months = firstMatch(normalized, [
+    /okres\s+kredytowania[^0-9]{0,60}(\d{1,3})\s*mies/i,
+    /(\d{1,3})\s*miesięcz/i,
+  ]);
+  const contractDate = firstMatch(normalized, [
+    /(?:data\s+umowy|zawarta\s+w\s+dniu|dnia)[^0-9]{0,40}(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})/i,
+  ]);
+
+  return {
+    bank: bank ?? "",
+    calculator: {
+      contractAmount,
+      contractDate,
+      interestRate,
+      months,
+      paidOutAmount,
+      rrso,
+    },
+    commission,
+    insurance,
+    paidOutAmount,
+  };
+}
+
 function cleanPdfText(value: string) {
   return value
     .replace(/\r/g, "\n")
@@ -484,7 +548,6 @@ export default function CasesPage() {
   }
 
   async function analyzePdf(file: File) {
-    if (!selectedCase) return;
     setPdfError("");
     setPdfStatus("Odczytuję PDF na tym urządzeniu…");
     setIsAnalyzing(true);
@@ -508,12 +571,28 @@ export default function CasesPage() {
       }
 
       setPdfStatus("Maskuję dane osobowe i porównuję umowę z art. 30…");
+      const inferred = inferDraftDataFromContractText(extracted.text);
+      const activeCalculator = selectedCase
+        ? calculator
+        : {
+            ...draftCalculator,
+            contractAmount: draftCalculator.contractAmount || inferred.calculator.contractAmount,
+            contractDate: draftCalculator.contractDate || inferred.calculator.contractDate,
+            interestRate: draftCalculator.interestRate || inferred.calculator.interestRate,
+            months: draftCalculator.months || inferred.calculator.months,
+            paidOutAmount: draftCalculator.paidOutAmount || inferred.calculator.paidOutAmount,
+            rrso: draftCalculator.rrso || inferred.calculator.rrso,
+          };
+      const activeResult = calculateSkd(activeCalculator);
+      const activeBank = selectedCase?.bank || draft.bank || inferred.bank;
+      const activeProduct = selectedCase?.product || draft.product;
+
       const response = await fetch("/api/analyze-skd-contract", {
         body: JSON.stringify({
-          bank: selectedCase.bank,
+          bank: activeBank,
           calculationSummary: `Wstępna wartość korzyści: ${formatMoney(calculatorResult.estimatedClaim)}; kwota kredytu: ${calculator.contractAmount || "brak"}; kapitał wypłacony: ${calculator.paidOutAmount || "brak"}; okres: ${calculator.months || "brak"} miesięcy; RRSO: ${calculator.rrso || "brak"}%.`,
           contractText: redactContractText(extracted.text),
-          product: selectedCase.product,
+          product: activeProduct,
         }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
@@ -529,6 +608,33 @@ export default function CasesPage() {
       }
 
       const analyzedAt = new Date().toISOString();
+      if (!selectedCase) {
+        const nextAnalysis = {
+          analyzedAt,
+          clientCard: data.clientCard ?? "",
+          fileLabel: "Umowa PDF — analiza przed zapisem sprawy",
+          pages: extracted.pages,
+          report: data.analysis ?? "",
+          sources: data.sources ?? [],
+        };
+
+        setDraftCalculator(activeCalculator);
+        setDraft((current) => ({
+          ...current,
+          analysis: nextAnalysis,
+          amounts: {
+            ...current.amounts,
+            capital: current.amounts.capital || activeCalculator.paidOutAmount || inferred.paidOutAmount,
+            commission: current.amounts.commission || inferred.commission,
+            insurance: current.amounts.insurance || inferred.insurance,
+          },
+          bank: current.bank || inferred.bank,
+          documents: { ...current.documents, umowa: true },
+          status: current.status === "nowa" ? "w-analizie" : current.status,
+        }));
+        setPdfStatus("Analiza jest gotowa w formularzu. Uzupełnij brakujące pola i zapisz sprawę.");
+        return;
+      }
       updateSelectedCase((item) => ({
         ...item,
         analysis: {
@@ -745,6 +851,40 @@ export default function CasesPage() {
             </section>
           </aside>
         </section>
+
+        {!selectedCase ? (
+          <section className="case-tools">
+            <article className="case-tool-card case-contract-analysis">
+              <header>
+                <div><p className="eyebrow">Analiza przed zapisem</p><h2>📄 Analiza umowy PDF — robocza sprawa</h2></div>
+                {draft.analysis ? <span className="case-saved-badge">✓ gotowa do zapisu</span> : null}
+              </header>
+              <div className="case-pdf-zone">
+                <input accept="application/pdf,.pdf" aria-label="Dodaj umowę PDF przed zapisaniem sprawy" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void analyzePdf(file); }} ref={pdfInputRef} type="file" />
+                <button disabled={isAnalyzing} onClick={() => pdfInputRef.current?.click()} type="button">
+                  {isAnalyzing ? "Analizuję umowę…" : draft.analysis ? "↻ Przeanalizuj ponownie PDF" : "＋ Dodaj umowę klienta w PDF"}
+                </button>
+                <div>
+                  <strong>Najpierw PDF, potem zapis sprawy</strong>
+                  <p>Agent odczyta umowę, uzupełni dane które znajdzie, pokaże analizę SKD i zapisze ją razem ze sprawą po kliknięciu „Dodaj sprawę”.</p>
+                </div>
+              </div>
+              {pdfStatus ? <p className="case-analysis-status">{pdfStatus}</p> : null}
+              {pdfError ? <p className="cases-warning">{pdfError}</p> : null}
+              {draft.analysis ? (
+                <section className="case-analysis-report">
+                  <div className="case-analysis-meta">
+                    <span>{draft.analysis.fileLabel}</span>
+                    <span>{draft.analysis.pages} str.</span>
+                    <span>{new Date(draft.analysis.analyzedAt).toLocaleString("pl-PL")}</span>
+                  </div>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft.analysis.report}</ReactMarkdown>
+                  <footer><strong>Źródła z bazy wiedzy:</strong> {draft.analysis.sources.join(", ") || "brak nazw źródeł"}</footer>
+                </section>
+              ) : <p className="cases-empty">Dodaj PDF, żeby rozpocząć analizę bez wcześniejszego zapisywania sprawy.</p>}
+            </article>
+          </section>
+        ) : null}
 
         {selectedCase ? (
           <section className="case-tools">
