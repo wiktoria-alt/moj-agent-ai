@@ -184,6 +184,86 @@ function tableCell(value: unknown, fallback = "nie znaleziono") {
     .slice(0, 700) || fallback;
 }
 
+function normalizeForSearch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function excerptForKeywords(text: string, keywords: string[]) {
+  const normalizedText = normalizeForSearch(text);
+  const normalizedKeywords = keywords.map(normalizeForSearch);
+  const positions = normalizedKeywords
+    .map((keyword) => normalizedText.indexOf(keyword))
+    .filter((position) => position >= 0);
+
+  if (!positions.length) return "";
+
+  const position = Math.min(...positions);
+  const start = Math.max(0, position - 220);
+  const end = Math.min(text.length, position + 520);
+  return text.slice(start, end).replace(/\s+/g, " ").trim();
+}
+
+function fallbackRowsFromContract(contractText: string) {
+  const keywordGroups: Record<string, string[]> = {
+    "art. 30 ust. 1 pkt 7 u.k.k.": [
+      "prowizja",
+      "ubezpieczenie",
+      "rrso",
+      "całkowita kwota do zapłaty",
+      "calkowita kwota do zaplaty",
+      "kwota kredytu",
+      "kredytowana",
+      "finansowana",
+    ],
+    "art. 30 ust. 1 pkt 10 u.k.k.": [
+      "opłata",
+      "oplata",
+      "opłat",
+      "koszt",
+      "taryfa",
+      "tabela opłat",
+      "zmiana opłat",
+      "może ulec zmianie",
+      "bank ma prawo",
+    ],
+    "art. 30 ust. 1 pkt 15 u.k.k.": [
+      "odstąpienie",
+      "odstapienie",
+      "odstąpić",
+      "odstapic",
+      "14 dni",
+      "odsetki dzienne",
+      "formularz odstąpienia",
+    ],
+    "art. 30 ust. 1 pkt 16 u.k.k.": [
+      "wcześniejsza spłata",
+      "wczesniejsza splata",
+      "przedterminowa spłata",
+      "przedterminowa splata",
+      "spłata przed terminem",
+      "zwrot kosztów",
+      "rozliczenie",
+      "rekompensata",
+    ],
+  };
+
+  return focusedSkdRows.map((row) => {
+    const quote = excerptForKeywords(contractText, keywordGroups[row.source] ?? []);
+    return {
+      check: row.check,
+      quote: quote || "nie znaleziono",
+      reason: quote
+        ? "Aplikacja znalazła w odczytanym tekście umowy fragment powiązany z tym punktem; wymaga oceny, czy informacja jest pełna i konkretna."
+        : "W odczytanym tekście nie znaleziono typowych słów ani fragmentów dla tego punktu. Jeśli PDF jest skanem słabej jakości, uruchom analizę ponownie na wyraźniejszym pliku.",
+      score: quote ? "do ręcznej weryfikacji" : "nie znaleziono w odczytanym tekście",
+      source: row.source,
+    };
+  });
+}
+
 function extractJsonArray(text: string) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
   const raw = fenced ?? text;
@@ -200,19 +280,24 @@ function extractJsonArray(text: string) {
   }
 }
 
-function normalizeAuditRows(rawRows: unknown[]) {
+function normalizeAuditRows(rawRows: unknown[], contractText = "") {
+  const fallbackRows = fallbackRowsFromContract(contractText);
+
   return focusedSkdRows.map((expected) => {
     const raw = rawRows.find((row) => {
       if (!row || typeof row !== "object") return false;
       const value = row as Record<string, unknown>;
       return Number(value.lp) === expected.index || String(value.podstawa ?? "").includes(expected.source);
     }) as Record<string, unknown> | undefined;
+    const fallback = fallbackRows.find((row) => row.source === expected.source);
+    const rawQuote = tableCell(raw?.cytatZUmowy, "");
+    const hasRawQuote = rawQuote && !/^nie znaleziono$/i.test(rawQuote);
 
     return {
       check: expected.check,
-      quote: tableCell(raw?.cytatZUmowy, "nie znaleziono"),
-      reason: tableCell(raw?.dlaczego, "Model nie zwrócił jednoznacznej oceny dla tego punktu; sprawdź ręcznie w odczytanym tekście umowy."),
-      score: tableCell(raw?.ocena, "do ręcznej weryfikacji"),
+      quote: hasRawQuote ? rawQuote : fallback?.quote ?? "nie znaleziono",
+      reason: tableCell(raw?.dlaczego, fallback?.reason ?? "Sprawdź ręcznie w odczytanym tekście umowy."),
+      score: tableCell(raw?.ocena, fallback?.score ?? "do ręcznej weryfikacji"),
       source: expected.source,
     };
   });
@@ -593,7 +678,7 @@ ${contractText}`,
       rawAuditRows = extractJsonArray(retryAudit.text);
     }
 
-    const parsedAuditRows = normalizeAuditRows(rawAuditRows);
+    const parsedAuditRows = normalizeAuditRows(rawAuditRows, contractText);
     const deterministicAnalysis = renderAnalysisMarkdown(parsedAuditRows, sourceDocuments);
     const clientCardText = cardPart?.trim();
     const generatedClientCard =
