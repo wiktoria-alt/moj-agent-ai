@@ -124,18 +124,6 @@ async function fetchWeather(): Promise<WeatherData> {
   return parseWeather(data.weather);
 }
 
-async function fetchRates() {
-  const data = await fetchDashboardJson<{
-    currencyUpdatedAt: string;
-    rates: RateData[];
-  }>("/api/dashboard?scope=rates");
-
-  return {
-    rates: data.rates,
-    updatedAt: new Date(data.currencyUpdatedAt),
-  };
-}
-
 async function fetchHolidays() {
   const data = await fetchDashboardJson<{
     holidays: HolidayData[];
@@ -176,15 +164,6 @@ export default function Dashboard() {
     setData((current) => ({ ...current, weather }));
   }, []);
 
-  const loadRates = useCallback(async () => {
-    const { rates, updatedAt } = await fetchRates();
-    setData((current) => ({
-      ...current,
-      currencyUpdatedAt: updatedAt,
-      rates,
-    }));
-  }, []);
-
   const loadHolidays = useCallback(async () => {
     const { holidays, updatedAt } = await fetchHolidays();
     setData((current) => ({
@@ -218,19 +197,15 @@ export default function Dashboard() {
     const weatherInterval = window.setInterval(() => {
       void loadWeather().catch(() => undefined);
     }, 15 * 60 * 1000);
-    const currencyInterval = window.setInterval(() => {
-      void loadRates().catch(() => undefined);
-    }, 60 * 60 * 1000);
     const clockInterval = window.setInterval(() => {
       setData((current) => ({ ...current, currentDateTime: new Date() }));
     }, 60 * 1000);
 
     return () => {
       window.clearInterval(weatherInterval);
-      window.clearInterval(currencyInterval);
       window.clearInterval(clockInterval);
     };
-  }, [loadAll, loadRates, loadWeather]);
+  }, [loadAll, loadWeather]);
 
   const formattedDate = useMemo(
     () =>

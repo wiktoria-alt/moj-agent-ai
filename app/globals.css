@@ -3940,6 +3940,11 @@ h2 {
   background: linear-gradient(135deg, rgba(15, 118, 110, 0.88), rgba(8, 145, 178, 0.62));
 }
 
+.dashboard-shell .currency-card,
+.dashboard-shell .attractions-card {
+  display: none !important;
+}
+
 .dashboard-card header {
   display: flex;
   align-items: flex-start;
