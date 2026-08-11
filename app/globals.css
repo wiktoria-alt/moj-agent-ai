@@ -8656,6 +8656,7 @@ h2 {
 
 .cases-actions,
 .cases-detail-actions {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -8679,6 +8680,7 @@ h2 {
 
 .cases-actions button,
 .cases-detail-actions button {
+  flex: 0 0 auto;
   min-height: 44px;
   padding: 0 16px;
 }
@@ -8705,19 +8707,21 @@ h2 {
 }
 
 .cases-list-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 5px;
-  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+  padding: 12px;
 }
 
 .cases-list-main {
   display: grid;
-  gap: 5px;
+  flex: 1 1 auto;
+  gap: 4px;
   min-width: 0;
   border: 0;
   background: transparent;
-  padding: 4px;
+  padding: 6px 4px;
   text-align: left;
 }
 
@@ -8730,10 +8734,16 @@ h2 {
 .cases-list-actions {
   display: flex;
   align-items: center;
+  align-self: center;
+  flex: 0 0 auto;
   gap: 6px;
 }
 
 .cases-list-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
   min-height: 34px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--app-bg-muted) 72%, var(--app-bg-panel));
@@ -8773,6 +8783,7 @@ h2 {
 
 .cases-detail-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
 }

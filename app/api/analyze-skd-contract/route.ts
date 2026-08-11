@@ -30,6 +30,27 @@ function articleWindow(text: string, article: number, nextArticle: number) {
   return (next > 0 ? rest.slice(0, next) : rest).trim();
 }
 
+function articleChecklist(articleText: string) {
+  const normalized = articleText
+    .replace(/\r/g, "\n")
+    .replace(/;\s*(\d{1,2})\)/g, ";\n$1)")
+    .replace(/\.\s*(\d{1,2})\)/g, ".\n$1)")
+    .replace(/\n{3,}/g, "\n\n");
+  const matches = [...normalized.matchAll(/(?:^|\n)\s*(\d{1,2})\)\s*([\s\S]*?)(?=\n\s*\d{1,2}\)|$)/g)];
+
+  if (!matches.length) {
+    return normalized.slice(0, 20000);
+  }
+
+  return matches
+    .map((match) => {
+      const point = match[1];
+      const requirement = match[2].replace(/\s+/g, " ").trim().slice(0, 900);
+      return `Art. 30 ust. 1 pkt ${point}: ${requirement}`;
+    })
+    .join("\n");
+}
+
 function compactText(value: string) {
   return value.replace(/\r/g, "\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 }
@@ -70,6 +91,9 @@ Uwzględnij: co wykryto, czy SKD jest pewne, co oznacza wynik kalkulatora, jakie
 
 ## Ważne zastrzeżenie
 Jedno krótkie zdanie, że to wstępna analiza wymagająca potwierdzenia przez specjalistę.
+
+KRYTYCZNA REGULA:
+Raport ma bazowac na sekcji "CHECKLISTA ART. 30 Z DOKUMENTU SYSTEMOWEGO". W tabeli "Weryfikacja art. 30" wypisz kazdy punkt z tej checklisty, porownaj go z odczytanym tekstem umowy i nie zgaduj punktow spoza dokumentu systemowego.
 
 Bank: ${bank}
 Produkt: ${product}
@@ -129,14 +153,18 @@ export async function POST(request: Request) {
 
     let knowledgeResults: Awaited<ReturnType<typeof searchKnowledgeBase>>["results"] = [];
     let sourceDocuments: string[] = [];
+    let article30PointChecklist = "";
 
     try {
       const [documentKnowledge, ...knowledgeResponses] = await Promise.all([
         getKnowledgeDocumentsByTitle([
+          "%Ustawa z 12.05.2011 o kredycie konsumenckim%",
+          "%art. 30%",
+          "%art 30%",
           "%kredycie konsumenckim%",
           "%kredytu konsumenckiego%",
           "%Ustawa z 12.05.2011%",
-        ]),
+        ], 500),
         ...art30KnowledgeQueries.map((query) =>
           searchKnowledgeBase(query, { matchCount: 12, matchThreshold: 0.2 }),
         ),
@@ -146,6 +174,17 @@ export async function POST(request: Request) {
       );
       const article30Text = articleWindow(fullLawText, 30, 31);
       const article45Text = articleWindow(fullLawText, 45, 46);
+      article30PointChecklist = articleChecklist(article30Text);
+
+      if (!article30Text) {
+        return Response.json(
+          {
+            error:
+              "Nie znalazłem art. 30 ustawy w dokumencie systemowym. Dodaj w Bazie wiedzy ustawę o kredycie konsumenckim albo sprawdź, czy dokument ma tytuł zawierający 'Ustawa' i 'kredycie konsumenckim'.",
+          },
+          { status: 422 },
+        );
+      }
       const exactLawResults = [
         article30Text
           ? {
@@ -169,7 +208,16 @@ export async function POST(request: Request) {
 
       const allKnowledgeResponses = [
         {
-          results: exactLawResults,
+          results: [
+            {
+              added_at: documentKnowledge.results[0]?.added_at ?? null,
+              content: article30PointChecklist,
+              metadata: { source: "art. 30 checklist", priority: "checklist" },
+              similarity: 3,
+              title: "Ustawa o kredycie konsumenckim - checklista art. 30",
+            },
+            ...exactLawResults,
+          ],
           source_documents: [
             ...documentKnowledge.source_documents,
             ...exactLawResults.map((result) => result.title),
@@ -179,14 +227,6 @@ export async function POST(request: Request) {
         ...knowledgeResponses,
       ];
 
-      if (!article30Text) {
-        const fallback = await Promise.all(
-        art30KnowledgeQueries.map((query) =>
-          searchKnowledgeBase(query, { matchCount: 12, matchThreshold: 0.2 }),
-        ),
-      );
-        allKnowledgeResponses.push(...fallback);
-      }
       const seen = new Set<string>();
 
       for (const response of allKnowledgeResponses) {
@@ -280,6 +320,9 @@ Kalkulacja: ${calculationSummary}
 
 BAZA WIEDZY:
 ${knowledgeText}
+
+CHECKLISTA ART. 30 Z DOKUMENTU SYSTEMOWEGO:
+${article30PointChecklist}
 
 ODCZYTANY I ZANONIMIZOWANY TEKST UMOWY:
 ${contractText}`,

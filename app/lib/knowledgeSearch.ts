@@ -51,7 +51,7 @@ function getChunkIndex(metadata: Record<string, unknown>) {
 
 export async function getKnowledgeDocumentsByTitle(
   titlePatterns: string[],
-  limit = 120,
+  limit = 500,
 ): Promise<KnowledgeSearchResponse> {
   const supabase = getKnowledgeSupabase();
   const results: KnowledgeSearchResult[] = [];
