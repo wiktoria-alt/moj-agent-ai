@@ -20,6 +20,28 @@ const art30KnowledgeQueries = [
   "art. 45 sankcja kredytu darmowego naruszenie art. 30 ustawy o kredycie konsumenckim",
 ];
 
+const focusedSkdChecklist = [
+  "1. art. 29 ust. 1 u.k.k. - Brak przekazania umowy na trwałym nośniku; sprawdź transparentność i dowód doręczenia umowy.",
+  "2. art. 30 ust. 1 pkt 4 u.k.k. - Niejednoznaczne określenie kwoty kredytu; sprawdź, czy klient może odróżnić kwotę netto od kosztów skredytowanych.",
+  "3. art. 30 ust. 1 pkt 5 u.k.k. - Niejasne zasady i terminy wypłaty kredytu; sprawdź, czy da się ustalić termin rzeczywistego otrzymania środków.",
+  "4. art. 30 ust. 1 pkt 6 u.k.k. - Nieprecyzyjna klauzula zmiennego oprocentowania; sprawdź, czy bank nie ma dowolności kształtowania kosztu kredytu.",
+  "5. art. 30 ust. 1 pkt 6 u.k.k. - Wadliwe kryteria do wyliczenia oprocentowania; sprawdź, czy kryteria są obiektywne, jasne i weryfikowalne.",
+  "6. art. 30 ust. 1 pkt 7 u.k.k. - Błędnie obliczone RRSO oraz całkowita kwota do zapłaty; sprawdź, czy koszt kredytu nie jest zawyżony albo niejasny.",
+  "7. art. 30 ust. 1 pkt 10 u.k.k. - Brak skonkretyzowanych warunków zmiany kosztów i opłat bankowych.",
+  "8. art. 30 ust. 1 pkt 11 u.k.k. - Brak jasnych zasad naliczania i informowania o odsetkach za opóźnienie.",
+  "9. art. 30 ust. 1 pkt 14 u.k.k. - Brak wymaganych informacji o ubezpieczeniu oraz sposobie jego sprzedaży.",
+  "10. art. 30 ust. 1 pkt 15 u.k.k. - Brak możliwości określenia rzeczywistego rozpoczęcia biegu terminu odstąpienia od umowy.",
+  "11. art. 30 ust. 1 pkt 15 u.k.k. - Brak informacji o skutkach odstąpienia od umowy.",
+  "12. art. 30 ust. 1 pkt 15 u.k.k. - Ograniczenie formy odstąpienia do formy pisemnej.",
+  "13. art. 30 ust. 1 pkt 15 u.k.k. - Brak wskazania dziennych odsetek w kontekście odstąpienia.",
+  "14. art. 30 ust. 1 pkt 15 u.k.k. - Zastosowanie konwencji 360 dni w roku przy dziennym koszcie odsetek.",
+  "15. art. 30 ust. 1 pkt 15 u.k.k. - Zastosowanie kwoty brutto zamiast netto przy dziennym koszcie odsetek.",
+  "16. art. 30 ust. 1 pkt 16 u.k.k. - Brak informacji o terminie rozliczenia umowy wykonanej przed terminem.",
+  "17. art. 30 ust. 1 pkt 16 u.k.k. - Niepełna informacja o zasadach wcześniejszej spłaty kredytu.",
+  "18. art. 30 ust. 1 pkt 16 u.k.k. - Wymóg pisemnej dyspozycji wcześniejszej spłaty; sprawdź, czy utrudnia korzystanie z prawa do wcześniejszej spłaty.",
+  "19. art. 36a u.k.k. - Nieuprawnione podwyższenie pozaodsetkowych kosztów kredytu ponad ustawowy limit.",
+];
+
 function articleWindow(text: string, article: number, nextArticle: number) {
   const start = text.search(new RegExp(`\\bArt\\.?\\s*${article}\\b`, "i"));
 
@@ -27,6 +49,16 @@ function articleWindow(text: string, article: number, nextArticle: number) {
 
   const rest = text.slice(start);
   const next = rest.search(new RegExp(`\\bArt\\.?\\s*${nextArticle}\\b`, "i"));
+  return (next > 0 ? rest.slice(0, next) : rest).trim();
+}
+
+function articleWindowByPattern(text: string, startPattern: string, nextPattern: string) {
+  const start = text.search(new RegExp(startPattern, "i"));
+
+  if (start < 0) return "";
+
+  const rest = text.slice(start);
+  const next = rest.search(new RegExp(nextPattern, "i"));
   return (next > 0 ? rest.slice(0, next) : rest).trim();
 }
 
@@ -172,8 +204,10 @@ export async function POST(request: Request) {
       const fullLawText = compactText(
         documentKnowledge.results.map((result) => result.content).join("\n\n"),
       );
+      const article29Text = articleWindow(fullLawText, 29, 30);
       const article30Text = articleWindow(fullLawText, 30, 31);
       const article45Text = articleWindow(fullLawText, 45, 46);
+      const article36aText = articleWindowByPattern(fullLawText, "\\bArt\\.?\\s*36a\\b", "\\bArt\\.?\\s*36b\\b|\\bArt\\.?\\s*37\\b");
       article30PointChecklist = articleChecklist(article30Text);
 
       if (!article30Text) {
@@ -186,6 +220,15 @@ export async function POST(request: Request) {
         );
       }
       const exactLawResults = [
+        article29Text
+          ? {
+              added_at: documentKnowledge.results[0]?.added_at ?? null,
+              content: article29Text,
+              metadata: { source: "art. 29", priority: "exact" },
+              similarity: 2,
+              title: "Ustawa o kredycie konsumenckim - art. 29",
+            }
+          : null,
         article30Text
           ? {
               added_at: documentKnowledge.results[0]?.added_at ?? null,
@@ -202,6 +245,15 @@ export async function POST(request: Request) {
               metadata: { source: "art. 45", priority: "exact" },
               similarity: 2,
               title: "Ustawa o kredycie konsumenckim - art. 45",
+            }
+          : null,
+        article36aText
+          ? {
+              added_at: documentKnowledge.results[0]?.added_at ?? null,
+              content: article36aText,
+              metadata: { source: "art. 36a", priority: "exact" },
+              similarity: 2,
+              title: "Ustawa o kredycie konsumenckim - art. 36a",
             }
           : null,
       ].filter((result): result is NonNullable<typeof result> => result !== null);
@@ -313,6 +365,16 @@ Krótka praktyczna checklista dokumentów i kontroli przez prawnika/specjalistę
 Następnie wpisz dokładnie znacznik [[FISZKA_KLIENTA]] i przygotuj fiszkę według tych samych zasad oraz struktury co w instrukcji poniżej:
 ${clientCardPrompt("Użyj ustaleń z raportu utworzonego powyżej.", bank, product, calculationSummary)}
 
+OBOWIAZKOWY FORMAT RAPORTU:
+Nie zaczynaj i nie koncz sekcji "Weryfikacja" pojedynczym naglowkiem tabeli. Nie zwracaj pustej tabeli.
+Najwazniejsza sekcja ma nazywac sie "Weryfikacja checklisty SKD" i ma zawierac wszystkie pozycje z "CHECKLISTA NARUSZEN SKD DO SPRAWDZENIA".
+Dla kazdej pozycji napisz krotko:
+- Podstawa
+- Co sprawdzam
+- Co znaleziono w umowie: cytat albo "nie znaleziono"
+- Ocena: OK / naruszone / możliwe naruszenie / do ręcznej weryfikacji / nie znaleziono w odczytanym tekście
+- Dlaczego
+
 KONTEKST SPRAWY:
 Bank: ${bank}
 Produkt: ${product}
@@ -323,6 +385,9 @@ ${knowledgeText}
 
 CHECKLISTA ART. 30 Z DOKUMENTU SYSTEMOWEGO:
 ${article30PointChecklist}
+
+CHECKLISTA NARUSZEN SKD DO SPRAWDZENIA:
+${focusedSkdChecklist.join("\n")}
 
 ODCZYTANY I ZANONIMIZOWANY TEKST UMOWY:
 ${contractText}`,

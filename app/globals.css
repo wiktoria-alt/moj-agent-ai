@@ -9083,7 +9083,7 @@ h2 {
   border-radius: 18px;
   background: var(--app-bg-panel);
   color: var(--app-text);
-  padding: 20px;
+  padding: 18px;
 }
 
 .case-analysis-meta {
@@ -9104,14 +9104,22 @@ h2 {
 
 .case-analysis-report h2,
 .case-analysis-report h3 {
-  margin: 22px 0 10px;
+  margin: 18px 0 8px;
   color: var(--app-text);
 }
 
 .case-analysis-report p,
 .case-analysis-report li {
   color: var(--app-text-soft);
-  line-height: 1.65;
+  line-height: 1.5;
+}
+
+.case-analysis-report ul,
+.case-analysis-report ol {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 16px;
+  padding-left: 22px;
 }
 
 .case-analysis-report table {
