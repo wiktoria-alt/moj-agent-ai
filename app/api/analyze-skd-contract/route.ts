@@ -123,6 +123,32 @@ const focusedSkdRows = [
   },
 ];
 
+const skdAssessmentRules = `
+REGULY OCENY SKD:
+
+1) art. 30 ust. 1 pkt 7 u.k.k.
+- Naruszone albo możliwe naruszenie: gdy umowa pokazuje prowizję lub ubezpieczenie doliczone/kredytowane w kwocie brutto kredytu, a RRSO lub całkowita kwota do zapłaty mogą być liczone od kwoty obejmującej te koszty.
+- OK: gdy kwota kredytu, koszty kredytowane, RRSO i całkowita kwota do zapłaty są rozdzielone i jasno opisane.
+- Sprawdź słowa: prowizja, ubezpieczenie, kwota kredytu, całkowita kwota kredytu, całkowita kwota do zapłaty, RRSO.
+
+2) art. 30 ust. 1 pkt 10 u.k.k.
+- Naruszone albo możliwe naruszenie: gdy umowa mówi, że bank może zmieniać opłaty/koszty/taryfę, ale nie wskazuje konkretnych, obiektywnych i weryfikowalnych przesłanek zmiany.
+- OK: gdy umowa jasno podaje konkretne warunki zmiany opłat i kosztów.
+- Sprawdź słowa: opłata, koszt, taryfa, tabela opłat, zmiana, bank ma prawo, może ulec zmianie.
+
+3) art. 30 ust. 1 pkt 15 u.k.k.
+- Naruszone albo możliwe naruszenie: gdy brakuje pełnych informacji o prawie odstąpienia, terminie, sposobie złożenia oświadczenia, skutkach odstąpienia, obowiązku zwrotu środków lub odsetkach dziennych.
+- OK: gdy umowa jasno opisuje wszystkie te elementy.
+- Sprawdź słowa: odstąpienie, 14 dni, oświadczenie, skutki odstąpienia, zwrot, odsetki dzienne.
+
+4) art. 30 ust. 1 pkt 16 u.k.k.
+- Naruszone albo możliwe naruszenie: gdy brakuje pełnych informacji o prawie do wcześniejszej/przedterminowej spłaty, sposobie rozliczenia, obniżeniu kosztów, terminie zwrotu kosztów lub gdy umowa wymaga nadmiernych formalności.
+- OK: gdy umowa jasno opisuje prawo, procedurę i rozliczenie wcześniejszej spłaty.
+- Sprawdź słowa: wcześniejsza spłata, przedterminowa spłata, spłata przed terminem, zwrot kosztów, rozliczenie, obniżenie kosztów.
+
+Nie używaj oceny "do ręcznej weryfikacji", jeśli cytat pozwala ocenić punkt. Wtedy wybierz OK, możliwe naruszenie albo naruszone i wyjaśnij dlaczego.
+`;
+
 void focusedSkdChecklist;
 void legacyFocusedSkdRows;
 
@@ -264,6 +290,99 @@ function fallbackRowsFromContract(contractText: string) {
   });
 }
 
+function candidateExcerptsFromContract(contractText: string) {
+  return fallbackRowsFromContract(contractText)
+    .map(
+      (row, index) =>
+        `${index + 1}. ${row.source}\nFragment z umowy: ${row.quote}\nWstępna wskazówka: ${row.reason}`,
+    )
+    .join("\n\n");
+}
+
+function localSkdAssessment(source: string, quote: string) {
+  const normalized = normalizeForSearch(quote);
+
+  if (!quote || /^nie znaleziono$/i.test(quote)) {
+    return {
+      reason: "W odczytanym tekście nie znaleziono fragmentu pozwalającego ocenić ten punkt.",
+      score: "nie znaleziono w odczytanym tekście",
+    };
+  }
+
+  if (source.includes("pkt 7")) {
+    const hasFinancedCost =
+      /prowizj|ubezpiec|skredyt|kredytowan|finansowan|kwota kredytu|rrso/.test(normalized);
+    return hasFinancedCost
+      ? {
+          reason:
+            "Fragment wskazuje na prowizję, ubezpieczenie albo koszt powiązany z kwotą kredytu/RRSO, więc trzeba sprawdzić, czy koszt został kredytowany w kwocie brutto i zniekształca informacje z pkt 7.",
+          score: "możliwe naruszenie",
+        }
+      : {
+          reason: "Fragment nie pokazuje prowizji ani ubezpieczenia kredytowanego w kwocie brutto kredytu.",
+          score: "OK",
+        };
+  }
+
+  if (source.includes("pkt 10")) {
+    const hasOpenChange =
+      /bank ma prawo|moze ulec zmianie|moze zmienic|taryf|tabela oplat|zmiana oplat|zmiany oplat|wedlug decyzji/.test(
+        normalized,
+      );
+    return hasOpenChange
+      ? {
+          reason:
+            "Fragment sugeruje możliwość zmiany opłat/kosztów; jeżeli brak konkretnych, obiektywnych przesłanek zmiany, jest to możliwe naruszenie pkt 10.",
+          score: "możliwe naruszenie",
+        }
+      : {
+          reason: "Fragment nie wskazuje na niekonkretne warunki zmiany kosztów lub opłat bankowych.",
+          score: "OK",
+        };
+  }
+
+  if (source.includes("pkt 15")) {
+    const hasWithdrawal = /odstap|14 dni|oswiadczen|odsetki dzienne|zwrot/.test(normalized);
+    const lacksDailyInterest = !/odsetki dzienne|odsetek dzien|dzienna kwota odsetek/.test(normalized);
+    return hasWithdrawal && lacksDailyInterest
+      ? {
+          reason:
+            "Fragment dotyczy odstąpienia, ale nie pokazuje pełnej informacji o odsetkach dziennych lub skutkach rozliczenia, więc jest to możliwe naruszenie pkt 15.",
+          score: "możliwe naruszenie",
+        }
+      : {
+          reason: hasWithdrawal
+            ? "Fragment zawiera informacje o odstąpieniu; nie widać oczywistego braku w znalezionym cytacie."
+            : "Nie znaleziono czytelnego fragmentu o odstąpieniu od umowy.",
+          score: hasWithdrawal ? "OK" : "nie znaleziono w odczytanym tekście",
+        };
+  }
+
+  if (source.includes("pkt 16")) {
+    const hasEarlyRepayment = /wczesniejsza splata|przedterminowa splata|splata przed terminem|zwrot kosztow|obnizenie kosztow|rozliczen/.test(
+      normalized,
+    );
+    const lacksSettlement = !/zwrot kosztow|obnizenie kosztow|rozliczen|proporcjonal/.test(normalized);
+    return hasEarlyRepayment && lacksSettlement
+      ? {
+          reason:
+            "Fragment dotyczy wcześniejszej spłaty, ale nie pokazuje pełnej informacji o rozliczeniu i zwrocie/obniżeniu kosztów, więc jest to możliwe naruszenie pkt 16.",
+          score: "możliwe naruszenie",
+        }
+      : {
+          reason: hasEarlyRepayment
+            ? "Fragment zawiera informacje o wcześniejszej spłacie; nie widać oczywistego braku w znalezionym cytacie."
+            : "Nie znaleziono czytelnego fragmentu o wcześniejszej spłacie.",
+          score: hasEarlyRepayment ? "OK" : "nie znaleziono w odczytanym tekście",
+        };
+  }
+
+  return {
+    reason: "Sprawdź ręcznie w odczytanym tekście umowy.",
+    score: "do ręcznej weryfikacji",
+  };
+}
+
 function extractJsonArray(text: string) {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
   const raw = fenced ?? text;
@@ -292,12 +411,18 @@ function normalizeAuditRows(rawRows: unknown[], contractText = "") {
     const fallback = fallbackRows.find((row) => row.source === expected.source);
     const rawQuote = tableCell(raw?.cytatZUmowy, "");
     const hasRawQuote = rawQuote && !/^nie znaleziono$/i.test(rawQuote);
+    const quote = hasRawQuote ? rawQuote : fallback?.quote ?? "nie znaleziono";
+    const rawScore = tableCell(raw?.ocena, fallback?.score ?? "do ręcznej weryfikacji");
+    const rawReason = tableCell(raw?.dlaczego, fallback?.reason ?? "Sprawdź ręcznie w odczytanym tekście umowy.");
+    const localAssessment = localSkdAssessment(expected.source, quote);
+    const shouldUseLocal =
+      /^do r[eę]cznej weryfikacji$/i.test(rawScore) && quote !== "nie znaleziono";
 
     return {
       check: expected.check,
-      quote: hasRawQuote ? rawQuote : fallback?.quote ?? "nie znaleziono",
-      reason: tableCell(raw?.dlaczego, fallback?.reason ?? "Sprawdź ręcznie w odczytanym tekście umowy."),
-      score: tableCell(raw?.ocena, fallback?.score ?? "do ręcznej weryfikacji"),
+      quote,
+      reason: shouldUseLocal ? localAssessment.reason : rawReason,
+      score: shouldUseLocal ? localAssessment.score : rawScore,
       source: expected.source,
     };
   });
@@ -656,7 +781,7 @@ ${contractText}`,
     });
 
     const [analysisPart, cardPart] = result.text.split("[[FISZKA_KLIENTA]]");
-    let rawAuditRows = extractJsonArray(result.text);
+    let rawAuditRows: unknown[] = [];
 
     if (!rawAuditRows.length) {
       const retryAudit = await generateText({
@@ -667,8 +792,21 @@ ${contractText}`,
 Każdy obiekt: lp, podstawa, cytatZUmowy, ocena, dlaczego.
 Ocena: OK / naruszone / możliwe naruszenie / do ręcznej weryfikacji / nie znaleziono w odczytanym tekście.
 
+ZASADY OCENY:
+Twoim zadaniem jest ocenic bledy w umowie pod katem SKD, nie tylko przepisac cytaty.
+Jesli jest fragment umowy dla punktu, nie zostawiaj automatycznie "do recznej weryfikacji" - ocen go wedlug regul.
+"do recznej weryfikacji" uzyj tylko, gdy fragment jest za krotki, sprzeczny albo OCR jest nieczytelny.
+
+${skdAssessmentRules}
+
 CHECKLISTA:
 ${focusedSkdRows.map((row) => `${row.index}. ${row.source} - ${row.check}`).join("\n")}
+
+FRAGMENTY ZNALEZIONE W UMOWIE:
+${candidateExcerptsFromContract(contractText)}
+
+FRAGMENTY USTAWY Z BAZY WIEDZY:
+${knowledgeText}
 
 TEKST UMOWY:
 ${contractText}`,
