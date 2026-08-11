@@ -14,6 +14,7 @@ import { supabase } from "../lib/supabase";
 type StoredDocument = {
   chunks: number;
   created_at: string;
+  system?: boolean;
   title: string;
 };
 

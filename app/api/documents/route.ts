@@ -4,8 +4,56 @@ type DocumentRow = {
   content?: string;
   created_at: string;
   metadata?: Record<string, unknown> | null;
+  user_id?: string;
   title: string;
 };
+
+const systemKnowledgeTitlePatterns = [
+  "%kredycie konsumenckim%",
+  "%kredytu konsumenckiego%",
+  "%ustawa z 12.05.2011%",
+  "%art. 30%",
+  "%art 30%",
+];
+
+function isSystemKnowledgeTitle(title: string) {
+  const normalized = title.toLowerCase();
+
+  return (
+    normalized.includes("kredycie konsumenckim") ||
+    normalized.includes("kredytu konsumenckiego") ||
+    normalized.includes("ustawa z 12.05.2011") ||
+    normalized.includes("art. 30") ||
+    normalized.includes("art 30")
+  );
+}
+
+async function fetchSystemKnowledgeRows(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+) {
+  const rows: DocumentRow[] = [];
+  const seen = new Set<string>();
+
+  for (const pattern of systemKnowledgeTitlePatterns) {
+    const { data, error } = await supabase
+      .from("documents")
+      .select("title, created_at, user_id")
+      .ilike("title", pattern)
+      .order("created_at", { ascending: false })
+      .limit(300);
+
+    if (error) throw error;
+
+    for (const row of (data ?? []) as DocumentRow[]) {
+      const key = `${row.title}|${row.created_at}|${row.user_id ?? ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rows.push(row);
+    }
+  }
+
+  return rows;
+}
 
 function getSupabaseAdmin() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -66,12 +114,17 @@ export async function GET(request: Request) {
   const title = new URL(request.url).searchParams.get("title")?.trim();
 
   if (title) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("documents")
       .select("title, content, metadata, created_at")
       .eq("title", title)
-      .eq("user_id", userId)
       .order("created_at", { ascending: true });
+
+    if (!isSystemKnowledgeTitle(title)) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return Response.json({ error: error.message }, { status: 500 });
@@ -82,7 +135,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("documents")
-    .select("title, created_at")
+    .select("title, created_at, user_id")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -90,19 +143,31 @@ export async function GET(request: Request) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
+  let systemRows: DocumentRow[] = [];
+
+  try {
+    systemRows = await fetchSystemKnowledgeRows(supabase);
+  } catch {
+    systemRows = [];
+  }
+
   const grouped = new Map<
     string,
-    { chunks: number; created_at: string; title: string }
+    { chunks: number; created_at: string; system?: boolean; title: string }
   >();
 
-  for (const row of (data ?? []) as DocumentRow[]) {
+  for (const row of [...((data ?? []) as DocumentRow[]), ...systemRows]) {
     const existing = grouped.get(row.title);
+    const isSystem = isSystemKnowledgeTitle(row.title) && row.user_id !== userId;
+
     if (existing) {
       existing.chunks += 1;
+      existing.system = existing.system || isSystem;
     } else {
       grouped.set(row.title, {
         chunks: 1,
         created_at: row.created_at,
+        system: isSystem,
         title: row.title,
       });
     }
