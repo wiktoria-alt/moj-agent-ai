@@ -42,15 +42,63 @@ const focusedSkdChecklist = [
   "19. art. 36a u.k.k. - Nieuprawnione podwyższenie pozaodsetkowych kosztów kredytu ponad ustawowy limit.",
 ];
 
-const focusedSkdRows = focusedSkdChecklist.map((item, index) => {
-  const withoutNumber = item.replace(/^\d+\.\s*/, "");
-  const separator = withoutNumber.indexOf(" - ");
-  return {
-    check: separator >= 0 ? withoutNumber.slice(separator + 3).trim() : withoutNumber,
-    index: index + 1,
-    source: separator >= 0 ? withoutNumber.slice(0, separator).trim() : withoutNumber,
-  };
-});
+const focusedSkdRows = [
+  {
+    check: "Trwały nośnik: czy umowa została przekazana konsumentowi w formie pozwalającej zachować i odtworzyć treść, oraz czy widać dowód doręczenia.",
+    index: 1,
+    source: "art. 29 ust. 1 u.k.k.",
+  },
+  {
+    check: "Kwota kredytu: czy kwota kredytu jest jednoznaczna i nie miesza kwoty netto z kosztami skredytowanymi.",
+    index: 2,
+    source: "art. 30 ust. 1 pkt 4 u.k.k.",
+  },
+  {
+    check: "Zasady i terminy wypłaty: czy da się ustalić, kiedy i w jaki sposób konsument rzeczywiście otrzyma środki.",
+    index: 3,
+    source: "art. 30 ust. 1 pkt 5 u.k.k.",
+  },
+  {
+    check: "Oprocentowanie: czy klauzula zmiennego oprocentowania jest precyzyjna, a kryteria zmiany oprocentowania są obiektywne, jasne i weryfikowalne.",
+    index: 4,
+    source: "art. 30 ust. 1 pkt 6 u.k.k.",
+  },
+  {
+    check: "RRSO i całkowita kwota do zapłaty: czy wartości są obliczone i opisane jasno oraz czy nie widać zawyżenia kosztu kredytu.",
+    index: 5,
+    source: "art. 30 ust. 1 pkt 7 u.k.k.",
+  },
+  {
+    check: "Koszty i opłaty bankowe: czy warunki zmiany kosztów i opłat są skonkretyzowane, a nie pozostawione dowolnej decyzji banku.",
+    index: 6,
+    source: "art. 30 ust. 1 pkt 10 u.k.k.",
+  },
+  {
+    check: "Odsetki za opóźnienie: czy umowa jasno opisuje zasady naliczania i informowania o odsetkach za opóźnienie.",
+    index: 7,
+    source: "art. 30 ust. 1 pkt 11 u.k.k.",
+  },
+  {
+    check: "Ubezpieczenie: czy umowa zawiera wymagane informacje o ubezpieczeniu oraz sposobie jego sprzedaży.",
+    index: 8,
+    source: "art. 30 ust. 1 pkt 14 u.k.k.",
+  },
+  {
+    check: "Odstąpienie od umowy: sprawdź termin rozpoczęcia biegu odstąpienia, skutki odstąpienia, formę odstąpienia, dzienne odsetki, konwencję 360 dni oraz czy dzienny koszt liczono od kwoty brutto zamiast netto.",
+    index: 9,
+    source: "art. 30 ust. 1 pkt 15 u.k.k.",
+  },
+  {
+    check: "Wcześniejsza spłata: sprawdź termin rozliczenia umowy wykonanej przed terminem, kompletność zasad wcześniejszej spłaty i ewentualny wymóg pisemnej dyspozycji.",
+    index: 10,
+    source: "art. 30 ust. 1 pkt 16 u.k.k.",
+  },
+  {
+    check: "Limit pozaodsetkowych kosztów kredytu: czy koszty nie przekraczają ustawowego limitu.",
+    index: 11,
+    source: "art. 36a u.k.k.",
+  },
+];
 
 function articleWindow(text: string, article: number, nextArticle: number) {
   const start = text.search(new RegExp(`\\bArt\\.?\\s*${article}\\b`, "i"));
@@ -137,7 +185,7 @@ function normalizeAuditRows(rawRows: unknown[]) {
     return {
       check: expected.check,
       quote: tableCell(raw?.cytatZUmowy, "nie znaleziono"),
-      reason: tableCell(raw?.dlaczego, "Wymaga ręcznej weryfikacji na podstawie odczytanego tekstu umowy."),
+      reason: tableCell(raw?.dlaczego, "Model nie zwrócił jednoznacznej oceny dla tego punktu; sprawdź ręcznie w odczytanym tekście umowy."),
       score: tableCell(raw?.ocena, "do ręcznej weryfikacji"),
       source: expected.source,
     };
@@ -483,10 +531,10 @@ CHECKLISTA ART. 30 Z DOKUMENTU SYSTEMOWEGO:
 ${article30PointChecklist}
 
 CHECKLISTA NARUSZEN SKD DO SPRAWDZENIA:
-${focusedSkdChecklist.join("\n")}
+${focusedSkdRows.map((row) => `${row.index}. ${row.source} - ${row.check}`).join("\n")}
 
 OSTATECZNY FORMAT ODPOWIEDZI:
-Zwróć wyłącznie JSON array, bez Markdown i bez komentarza. Array ma mieć dokładnie 19 obiektów w kolejności checklisty.
+Zwróć wyłącznie JSON array, bez Markdown i bez komentarza. Array ma mieć dokładnie 11 obiektów w kolejności checklisty.
 Pola każdego obiektu: lp, podstawa, cytatZUmowy, ocena, dlaczego.
 Jeśli czegoś nie ma w umowie, wpisz cytatZUmowy: "nie znaleziono" i ocena: "nie znaleziono w odczytanym tekście".
 
@@ -497,7 +545,29 @@ ${contractText}`,
     });
 
     const [analysisPart, cardPart] = result.text.split("[[FISZKA_KLIENTA]]");
-    const parsedAuditRows = normalizeAuditRows(extractJsonArray(result.text));
+    let rawAuditRows = extractJsonArray(result.text);
+
+    if (!rawAuditRows.length) {
+      const retryAudit = await generateText({
+        maxOutputTokens: 4500,
+        maxRetries: 0,
+        model: google(googleModelIds.flash),
+        prompt: `Zwróć wyłącznie JSON array dla analizy SKD. Bez Markdown. Dokładnie 11 obiektów.
+Każdy obiekt: lp, podstawa, cytatZUmowy, ocena, dlaczego.
+Ocena: OK / naruszone / możliwe naruszenie / do ręcznej weryfikacji / nie znaleziono w odczytanym tekście.
+
+CHECKLISTA:
+${focusedSkdRows.map((row) => `${row.index}. ${row.source} - ${row.check}`).join("\n")}
+
+TEKST UMOWY:
+${contractText}`,
+        temperature: 0,
+        timeout: { totalMs: 45000 },
+      });
+      rawAuditRows = extractJsonArray(retryAudit.text);
+    }
+
+    const parsedAuditRows = normalizeAuditRows(rawAuditRows);
     const deterministicAnalysis = renderAnalysisMarkdown(parsedAuditRows, sourceDocuments);
     const clientCardText = cardPart?.trim();
     const generatedClientCard =
