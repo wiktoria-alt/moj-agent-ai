@@ -9,6 +9,7 @@ import {
 import { ModelSelector } from "../components/ModelSelector";
 import { TopNavigation } from "../components/TopNavigation";
 import { getAiModelDetails, type AiModel } from "../lib/models";
+import { supabase } from "../lib/supabase";
 
 const visionQuestions = [
   "Co widzisz na tym obrazie?",
@@ -207,6 +208,7 @@ export default function VisionPage() {
     ]);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch("/api/chat", {
         body: JSON.stringify({
           image: attachedImage.dataUrl,
@@ -221,6 +223,7 @@ export default function VisionPage() {
           model: selectedModel,
         }),
         headers: {
+          ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
           "Content-Type": "application/json",
         },
         method: "POST",

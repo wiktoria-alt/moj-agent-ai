@@ -64,6 +64,17 @@ function getErrorText(error: unknown) {
   const messages = collectErrorCandidates(error)
     .map((candidate) => {
       if (typeof candidate === "string") {
+        try {
+          const parsed = JSON.parse(candidate) as { error?: unknown; message?: unknown };
+          if (typeof parsed.error === "string") {
+            return parsed.error;
+          }
+          if (typeof parsed.message === "string") {
+            return parsed.message;
+          }
+        } catch {
+          // Not a JSON error body.
+        }
         return candidate;
       }
 

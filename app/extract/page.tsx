@@ -14,6 +14,7 @@ import { ModelSelector } from "../components/ModelSelector";
 import { TopNavigation } from "../components/TopNavigation";
 import { getReadableErrorMessage } from "../lib/errors";
 import { getAiModelDetails, type AiModel } from "../lib/models";
+import { supabase } from "../lib/supabase";
 
 const extractTransport = new DefaultChatTransport({
   api: "/api/chat",
@@ -116,6 +117,7 @@ export default function ExtractPage() {
     setInput("");
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       await sendMessage(
         { text },
         {
@@ -124,6 +126,7 @@ export default function ExtractPage() {
             mode: "analyzer",
             model: selectedModel,
           },
+          headers: session ? { Authorization: `Bearer ${session.access_token}` } : undefined,
         },
       );
       clearAttachedImage();
