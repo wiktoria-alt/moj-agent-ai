@@ -262,6 +262,32 @@ async function extractPdfTextInBrowser(file: File) {
   }
 }
 
+async function extractPdfTextWithServerOcr(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch("/api/extract-pdf", {
+    body: formData,
+    method: "POST",
+  });
+  const data = (await response.json()) as {
+    error?: string;
+    extractionMethod?: "text" | "ocr";
+    pages?: number;
+    text?: string;
+  };
+
+  if (!response.ok || !data.text || !data.pages) {
+    throw new Error(data.error || "Nie udało się odczytać PDF przez OCR.");
+  }
+
+  return {
+    extractionMethod: data.extractionMethod ?? "ocr",
+    pages: data.pages,
+    text: cleanPdfText(data.text),
+  };
+}
+
 function normalizeCase(value: Partial<ClientCase>): ClientCase {
   const fallback = getEmptyCase();
   return {
@@ -471,9 +497,14 @@ export default function CasesPage() {
         throw new Error("PDF jest większy niż 15 MB. Skompresuj go lub podziel na części.");
       }
 
-      const extracted = await extractPdfTextInBrowser(file);
+      let extracted = await extractPdfTextInBrowser(file);
       if (extracted.text.length < 100) {
-        throw new Error("Nie udało się odczytać tekstu. Jeśli to skan, potrzebny jest PDF po OCR.");
+        setPdfStatus("PDF wygląda jak skan — uruchamiam OCR i odczytuję treść umowy…");
+        extracted = await extractPdfTextWithServerOcr(file);
+      }
+
+      if (extracted.text.length < 100) {
+        throw new Error("Nie udało się odczytać wystarczającej treści z PDF. Spróbuj wyraźniejszego skanu albo podziel plik na części.");
       }
 
       setPdfStatus("Maskuję dane osobowe i porównuję umowę z art. 30…");

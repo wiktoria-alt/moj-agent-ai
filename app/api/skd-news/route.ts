@@ -12,8 +12,20 @@ type NewsItem = {
 
 const feeds = [
   {
+    category: "judgment" as const,
+    query: '"sankcja kredytu darmowego" "II CSKP 89/26"',
+  },
+  {
+    category: "judgment" as const,
+    query: '"sankcja kredytu darmowego" "Sąd Najwyższy" "wyrok"',
+  },
+  {
+    category: "judgment" as const,
+    query: '"sankcja kredytu darmowego" "wyrok" when:30d',
+  },
+  {
     category: "news" as const,
-    query: '"sankcja kredytu darmowego" OR "SKD" kredyt konsumencki',
+    query: '"sankcja kredytu darmowego" OR "SKD" kredyt konsumencki when:30d',
   },
   {
     category: "tsue" as const,
@@ -27,7 +39,32 @@ const feeds = [
     category: "judgment" as const,
     query: 'site:orzeczenia.ms.gov.pl "sankcja kredytu darmowego"',
   },
+  {
+    category: "judgment" as const,
+    query: 'site:sn.pl "II CSKP 89/26"',
+  },
 ] as const;
+
+const watchedItems: NewsItem[] = [
+  {
+    category: "judgment",
+    description:
+      "Pilnowany wpis: Sąd Najwyższy, II CSKP 89/26. Ważny materiał do spraw SKD dotyczących kredytowanych kosztów, RRSO i obowiązków informacyjnych.",
+    link: "https://www.sn.pl/sites/orzecznictwo/Orzeczenia3/II%20CSKP%2089-26.pdf",
+    publishedAt: "2026-08-10T08:00:00.000Z",
+    source: "Sąd Najwyższy",
+    title: "Wyrok SN II CSKP 89/26 — ważny kierunek dla spraw SKD",
+  },
+  {
+    category: "judgment",
+    description:
+      "Aktualne omówienie wyroku SN z 8 lipca 2026 r. w sprawie sankcji kredytu darmowego.",
+    link: "https://www.prawo.pl/biznes/wyrok-sn-kiedy-dziala-sankcja-kredytu-darmowego%2C1550045.html",
+    publishedAt: "2026-08-09T08:00:00.000Z",
+    source: "Prawo.pl",
+    title: "Wyrok SN: kiedy działa sankcja kredytu darmowego",
+  },
+];
 
 const categoryPriority: Record<NewsItem["category"], number> = {
   tsue: 3,
@@ -127,6 +164,19 @@ function itemScore(item: NewsItem) {
   return score;
 }
 
+function itemTime(item: NewsItem) {
+  return item.publishedAt ? new Date(item.publishedAt).getTime() || 0 : 0;
+}
+
+function sortNewestAndImportant(a: NewsItem, b: NewsItem) {
+  const timeDifference = itemTime(b) - itemTime(a);
+  if (Math.abs(timeDifference) > 12 * 60 * 60 * 1000) {
+    return timeDifference;
+  }
+
+  return itemScore(b) - itemScore(a);
+}
+
 async function fetchFeed(query: string, category: NewsItem["category"]) {
   const url = new URL("https://news.google.com/rss/search");
   url.searchParams.set("q", query);
@@ -155,11 +205,12 @@ export async function GET() {
     );
     const items = settledFeeds
       .flatMap((feed) => (feed.status === "fulfilled" ? feed.value : []))
+      .concat(watchedItems)
       .filter((item) => item.title && item.link);
     const uniqueItems = Array.from(
       new Map(items.map((item) => [item.link, item])).values(),
     )
-      .sort((a, b) => itemScore(b) - itemScore(a))
+      .sort(sortNewestAndImportant)
       .slice(0, 18);
 
     return Response.json(
