@@ -42,6 +42,16 @@ const focusedSkdChecklist = [
   "19. art. 36a u.k.k. - Nieuprawnione podwyższenie pozaodsetkowych kosztów kredytu ponad ustawowy limit.",
 ];
 
+const focusedSkdRows = focusedSkdChecklist.map((item, index) => {
+  const withoutNumber = item.replace(/^\d+\.\s*/, "");
+  const separator = withoutNumber.indexOf(" - ");
+  return {
+    check: separator >= 0 ? withoutNumber.slice(separator + 3).trim() : withoutNumber,
+    index: index + 1,
+    source: separator >= 0 ? withoutNumber.slice(0, separator).trim() : withoutNumber,
+  };
+});
+
 function articleWindow(text: string, article: number, nextArticle: number) {
   const start = text.search(new RegExp(`\\bArt\\.?\\s*${article}\\b`, "i"));
 
@@ -89,6 +99,92 @@ function compactText(value: string) {
 
 function textValue(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function tableCell(value: unknown, fallback = "nie znaleziono") {
+  const text = typeof value === "string" ? value : fallback;
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/\|/g, "\\|")
+    .trim()
+    .slice(0, 700) || fallback;
+}
+
+function extractJsonArray(text: string) {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+  const raw = fenced ?? text;
+  const start = raw.indexOf("[");
+  const end = raw.lastIndexOf("]");
+
+  if (start < 0 || end <= start) return [];
+
+  try {
+    const parsed = JSON.parse(raw.slice(start, end + 1));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeAuditRows(rawRows: unknown[]) {
+  return focusedSkdRows.map((expected) => {
+    const raw = rawRows.find((row) => {
+      if (!row || typeof row !== "object") return false;
+      const value = row as Record<string, unknown>;
+      return Number(value.lp) === expected.index || String(value.podstawa ?? "").includes(expected.source);
+    }) as Record<string, unknown> | undefined;
+
+    return {
+      check: expected.check,
+      quote: tableCell(raw?.cytatZUmowy, "nie znaleziono"),
+      reason: tableCell(raw?.dlaczego, "Wymaga ręcznej weryfikacji na podstawie odczytanego tekstu umowy."),
+      score: tableCell(raw?.ocena, "do ręcznej weryfikacji"),
+      source: expected.source,
+    };
+  });
+}
+
+function renderAnalysisMarkdown(rows: ReturnType<typeof normalizeAuditRows>, sources: string[]) {
+  const problematic = rows.filter((row) => !/^ok$/i.test(row.score));
+  const summary =
+    problematic.length > 0
+      ? `Wstępna analiza wykazała ${problematic.length} punktów wymagających uwagi albo ręcznej weryfikacji. Poniżej tabela sprawdza po kolei wskazane podstawy: art. 29 ust. 1, wybrane punkty art. 30 ust. 1 oraz art. 36a u.k.k.`
+      : "Wstępna analiza nie wykazała oczywistych naruszeń w sprawdzanej checkliście, ale wynik nadal wymaga potwierdzenia przez specjalistę na pełnym dokumencie.";
+
+  const table = [
+    "| Punkt | Podstawa | Co sprawdzam | Cytat z umowy / brak | Ocena | Dlaczego |",
+    "|---:|---|---|---|---|---|",
+    ...rows.map(
+      (row, index) =>
+        `| ${index + 1} | ${tableCell(row.source)} | ${tableCell(row.check)} | ${tableCell(row.quote)} | ${tableCell(row.score)} | ${tableCell(row.reason)} |`,
+    ),
+  ].join("\n");
+
+  const issueList = problematic.length
+    ? problematic
+        .map((row, index) => `${index + 1}. **${row.source}** — ${row.score}. ${row.reason}`)
+        .join("\n")
+    : "Brak pozycji oznaczonych jako naruszenie w automatycznej weryfikacji.";
+
+  return `## Wstępny wynik
+${summary}
+
+## Weryfikacja checklisty SKD
+${table}
+
+## Punkty naruszone albo do ręcznej weryfikacji
+${issueList}
+
+## Czego nie można potwierdzić
+Elementy oznaczone jako "nie znaleziono" albo "do ręcznej weryfikacji" wymagają sprawdzenia w pełnym PDF-ie oraz w załącznikach do umowy.
+
+## Następne kroki
+1. Sprawdź ręcznie cytaty oznaczone jako "nie znaleziono".
+2. Porównaj wartości z kalkulatorem SKD, zwłaszcza RRSO, całkowitą kwotę do zapłaty i koszty pozaodsetkowe.
+3. Potwierdź wynik z prawnikiem/specjalistą przed wysłaniem reklamacji.
+
+## Źródła z bazy wiedzy
+${sources.join(", ") || "Ustawa o kredycie konsumenckim"}`;
 }
 
 function clientCardPrompt(
@@ -389,6 +485,11 @@ ${article30PointChecklist}
 CHECKLISTA NARUSZEN SKD DO SPRAWDZENIA:
 ${focusedSkdChecklist.join("\n")}
 
+OSTATECZNY FORMAT ODPOWIEDZI:
+Zwróć wyłącznie JSON array, bez Markdown i bez komentarza. Array ma mieć dokładnie 19 obiektów w kolejności checklisty.
+Pola każdego obiektu: lp, podstawa, cytatZUmowy, ocena, dlaczego.
+Jeśli czegoś nie ma w umowie, wpisz cytatZUmowy: "nie znaleziono" i ocena: "nie znaleziono w odczytanym tekście".
+
 ODCZYTANY I ZANONIMIZOWANY TEKST UMOWY:
 ${contractText}`,
       temperature: 0.1,
@@ -396,10 +497,25 @@ ${contractText}`,
     });
 
     const [analysisPart, cardPart] = result.text.split("[[FISZKA_KLIENTA]]");
+    const parsedAuditRows = normalizeAuditRows(extractJsonArray(result.text));
+    const deterministicAnalysis = renderAnalysisMarkdown(parsedAuditRows, sourceDocuments);
+    const clientCardText = cardPart?.trim();
+    const generatedClientCard =
+      clientCardText ||
+      (
+        await generateText({
+          maxOutputTokens: 2200,
+          maxRetries: 0,
+          model: google(googleModelIds.flash),
+          prompt: clientCardPrompt(deterministicAnalysis, bank, product, calculationSummary),
+          temperature: 0.15,
+          timeout: { totalMs: 45000 },
+        })
+      ).text.trim();
 
     return Response.json({
-      analysis: analysisPart.trim(),
-      clientCard: cardPart?.trim() ?? "",
+      analysis: deterministicAnalysis || analysisPart.trim(),
+      clientCard: generatedClientCard,
       sources: sourceDocuments,
     });
   } catch (error) {
