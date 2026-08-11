@@ -42,7 +42,7 @@ const focusedSkdChecklist = [
   "19. art. 36a u.k.k. - Nieuprawnione podwyższenie pozaodsetkowych kosztów kredytu ponad ustawowy limit.",
 ];
 
-const focusedSkdRows = [
+const legacyFocusedSkdRows = [
   {
     check: "Trwały nośnik: czy umowa została przekazana konsumentowi w formie pozwalającej zachować i odtworzyć treść, oraz czy widać dowód doręczenia.",
     index: 1,
@@ -99,6 +99,32 @@ const focusedSkdRows = [
     source: "art. 36a u.k.k.",
   },
 ];
+
+const focusedSkdRows = [
+  {
+    check: "Prowizja lub ubezpieczenie kredytowane: sprawdź, czy prowizja albo ubezpieczenie zostały doliczone do kwoty brutto kredytu i przez to wpływają na RRSO oraz całkowitą kwotę do zapłaty.",
+    index: 1,
+    source: "art. 30 ust. 1 pkt 7 u.k.k.",
+  },
+  {
+    check: "Koszty i opłaty bankowe: sprawdź, czy umowa konkretnie opisuje warunki zmiany kosztów i opłat bankowych, zamiast zostawiać to uznaniu banku.",
+    index: 2,
+    source: "art. 30 ust. 1 pkt 10 u.k.k.",
+  },
+  {
+    check: "Odstąpienie od umowy: sprawdź, czy umowa zawiera pełne informacje o prawie odstąpienia, terminie, sposobie, skutkach odstąpienia oraz kwocie odsetek dziennych.",
+    index: 3,
+    source: "art. 30 ust. 1 pkt 15 u.k.k.",
+  },
+  {
+    check: "Przedterminowa spłata: sprawdź, czy umowa zawiera pełne informacje o prawie do wcześniejszej spłaty, sposobie rozliczenia, terminie zwrotu kosztów i ewentualnych formalnościach.",
+    index: 4,
+    source: "art. 30 ust. 1 pkt 16 u.k.k.",
+  },
+];
+
+void focusedSkdChecklist;
+void legacyFocusedSkdRows;
 
 function articleWindow(text: string, article: number, nextArticle: number) {
   const start = text.search(new RegExp(`\\bArt\\.?\\s*${article}\\b`, "i"));
@@ -196,7 +222,7 @@ function renderAnalysisMarkdown(rows: ReturnType<typeof normalizeAuditRows>, sou
   const problematic = rows.filter((row) => !/^ok$/i.test(row.score));
   const summary =
     problematic.length > 0
-      ? `Wstępna analiza wykazała ${problematic.length} punktów wymagających uwagi albo ręcznej weryfikacji. Poniżej tabela sprawdza po kolei wskazane podstawy: art. 29 ust. 1, wybrane punkty art. 30 ust. 1 oraz art. 36a u.k.k.`
+      ? `Wstępna analiza wykazała ${problematic.length} punktów wymagających uwagi albo ręcznej weryfikacji. Poniżej tabela sprawdza po kolei tylko wskazane podstawy: art. 30 ust. 1 pkt 7, 10, 15 i 16 u.k.k.`
       : "Wstępna analiza nie wykazała oczywistych naruszeń w sprawdzanej checkliście, ale wynik nadal wymaga potwierdzenia przez specjalistę na pełnym dokumencie.";
 
   const table = [
@@ -348,10 +374,10 @@ export async function POST(request: Request) {
       const fullLawText = compactText(
         documentKnowledge.results.map((result) => result.content).join("\n\n"),
       );
-      const article29Text = articleWindow(fullLawText, 29, 30);
+      const article29Text = "";
       const article30Text = articleWindow(fullLawText, 30, 31);
       const article45Text = articleWindow(fullLawText, 45, 46);
-      const article36aText = articleWindowByPattern(fullLawText, "\\bArt\\.?\\s*36a\\b", "\\bArt\\.?\\s*36b\\b|\\bArt\\.?\\s*37\\b");
+      const article36aText = "";
       article30PointChecklist = articleChecklist(article30Text);
 
       if (!article30Text) {
@@ -534,7 +560,7 @@ CHECKLISTA NARUSZEN SKD DO SPRAWDZENIA:
 ${focusedSkdRows.map((row) => `${row.index}. ${row.source} - ${row.check}`).join("\n")}
 
 OSTATECZNY FORMAT ODPOWIEDZI:
-Zwróć wyłącznie JSON array, bez Markdown i bez komentarza. Array ma mieć dokładnie 11 obiektów w kolejności checklisty.
+Zwróć wyłącznie JSON array, bez Markdown i bez komentarza. Array ma mieć dokładnie 4 obiekty w kolejności checklisty.
 Pola każdego obiektu: lp, podstawa, cytatZUmowy, ocena, dlaczego.
 Jeśli czegoś nie ma w umowie, wpisz cytatZUmowy: "nie znaleziono" i ocena: "nie znaleziono w odczytanym tekście".
 
@@ -552,7 +578,7 @@ ${contractText}`,
         maxOutputTokens: 4500,
         maxRetries: 0,
         model: google(googleModelIds.flash),
-        prompt: `Zwróć wyłącznie JSON array dla analizy SKD. Bez Markdown. Dokładnie 11 obiektów.
+        prompt: `Zwróć wyłącznie JSON array dla analizy SKD. Bez Markdown. Dokładnie 4 obiekty.
 Każdy obiekt: lp, podstawa, cytatZUmowy, ocena, dlaczego.
 Ocena: OK / naruszone / możliwe naruszenie / do ręcznej weryfikacji / nie znaleziono w odczytanym tekście.
 
