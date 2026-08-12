@@ -3,7 +3,7 @@ import "./globals.css";
 import { AuthGate } from "./components/AuthGate";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://moj-agent-ai-agent-ai-szkolenie.vercel.app"),
+  metadataBase: new URL("https://moj-agent-ai-ten.vercel.app"),
   applicationName: "Agent SKD",
   title: {
     default: "Agent SKD - ekspert AI od sankcji kredytu darmowego",
