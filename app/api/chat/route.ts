@@ -176,6 +176,14 @@ Gdy użytkownik korzysta z Analizatora albo prosi o analizę umowy:
 - Zawsze oddziel: "Co widzę", "Możliwe ryzyka", "Czego brakuje", "Następny krok".
 - Nie przesądzaj wygranej; mów o przesłankach do dalszej weryfikacji.`;
 
+const fixedSkdPointMap = `## POPRAWNA MAPA PUNKTOW SKD
+Tych znaczen nie wolno zmieniac ani zgadywac:
+- art. 30 ust. 1 pkt 7 u.k.k. = RRSO i calkowita kwota do zaplaty; sprawdzaj zwlaszcza, czy prowizja albo ubezpieczenie sa kredytowane w kwocie brutto i czy przez to RRSO/calkowita kwota do zaplaty sa bledne lub mylace.
+- art. 30 ust. 1 pkt 10 u.k.k. = zasady i warunki zmiany oplat oraz kosztow; ryzyko jest wtedy, gdy bank zostawia sobie ogolna dowolnosc bez konkretnych, obiektywnych przeslanek.
+- art. 30 ust. 1 pkt 15 u.k.k. = prawo odstapienia od umowy; sprawdzaj termin, sposob, skutki, adres/forme i dzienne odsetki.
+- art. 30 ust. 1 pkt 16 u.k.k. = prawo do przedterminowej splaty; sprawdzaj zasady wczesniejszej splaty, rozliczenie kredytu i obnizenie/zwrot kosztow.
+Zakazane pomylki: pkt 10 nie jest odstapieniem, pkt 15 nie jest wczesniejsza splata, pkt 16 nie jest pozasadowym rozwiazywaniem sporow.`;
+
 const systemPrompts: Record<ChatMode, string> = {
   casual: `${professionalPersona}
 
@@ -1298,6 +1306,7 @@ export async function POST(req: Request) {
           createOutputFilterTransform<typeof requestAgentTools>([
             systemPrompts.agent,
             analyzerInstructions,
+            fixedSkdPointMap,
             webInstructions,
             knowledgeInstructions,
             generalToolsInstructions,
@@ -1332,6 +1341,8 @@ export async function POST(req: Request) {
         system: `${systemPrompts.agent}
 
 ${analyzerInstructions}
+
+${fixedSkdPointMap}
 
 ${webInstructions}
 
@@ -1389,6 +1400,8 @@ ${responseLength}`,
 
 ${stabilityInstructions}
 
+${fixedSkdPointMap}
+
 ${modeWebInstructions}
 
 ${knowledgeInstructions}
@@ -1424,6 +1437,7 @@ ${responseLength}`,
     const filteredText = filterOutput(appendSources(result.text, result.sources), [
       systemPrompts[selectedMode],
       stabilityInstructions,
+      fixedSkdPointMap,
       modeWebInstructions,
       knowledgeInstructions,
       generalToolsInstructions,

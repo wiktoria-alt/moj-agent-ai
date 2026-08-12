@@ -48,6 +48,14 @@ Dla komendy typu "/porownanie umowa kredytu vs formularz informacyjny pod kątem
 
 Każda tabela musi być kompletna: zamknij wszystkie wiersze, nie urywaj w połowie zdania, pisz krótkie komórki.`;
 
+const fixedSkdPointMap = `## POPRAWNA MAPA PUNKTOW SKD
+Tych znaczen nie wolno zmieniac ani zgadywac:
+- art. 30 ust. 1 pkt 7 u.k.k. = RRSO i calkowita kwota do zaplaty; sprawdzaj zwlaszcza, czy prowizja albo ubezpieczenie sa kredytowane w kwocie brutto i czy przez to RRSO/calkowita kwota do zaplaty sa bledne lub mylace.
+- art. 30 ust. 1 pkt 10 u.k.k. = zasady i warunki zmiany oplat oraz kosztow; ryzyko jest wtedy, gdy bank zostawia sobie ogolna dowolnosc bez konkretnych, obiektywnych przeslanek.
+- art. 30 ust. 1 pkt 15 u.k.k. = prawo odstapienia od umowy; sprawdzaj termin, sposob, skutki, adres/forme i dzienne odsetki.
+- art. 30 ust. 1 pkt 16 u.k.k. = prawo do przedterminowej splaty; sprawdzaj zasady wczesniejszej splaty, rozliczenie kredytu i obnizenie/zwrot kosztow.
+Zakazane pomylki: pkt 10 nie jest odstapieniem, pkt 15 nie jest wczesniejsza splata, pkt 16 nie jest pozasadowym rozwiazywaniem sporow.`;
+
 export async function POST(req: Request) {
   const { messages, model }: { messages: UIMessage[]; model?: unknown } =
     await req.json();
@@ -58,7 +66,7 @@ export async function POST(req: Request) {
     maxRetries: 0,
     maxOutputTokens: selectedModel === "pro" ? 5200 : 3600,
     temperature: 0.2,
-    system: `${formatSystemPrompt}\n\n${skdFormatRules}`,
+    system: `${formatSystemPrompt}\n\n${skdFormatRules}\n\n${fixedSkdPointMap}`,
     messages: await convertToModelMessages(messages),
   });
 
