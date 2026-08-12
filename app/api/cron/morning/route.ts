@@ -231,13 +231,36 @@ async function isAuthorized(request: Request) {
   return !error && Boolean(data.user);
 }
 
+function createShortSkdBriefing(humanDate: string) {
+  return `# Briefing SKD na ${humanDate}
+
+## Dziś
+- Sprawdź nowe umowy PDF i komplet dokumentów.
+- Przy sprawach klienta nie wpisuj danych osobowych w notatkach.
+- Oznacz sprawy, gdzie brakuje harmonogramu albo historii spłaty.
+
+## Kontrola SKD
+- **Pkt 7:** czy prowizja lub ubezpieczenie są kredytowane w kwocie brutto i wpływają na RRSO/całkowitą kwotę do zapłaty.
+- **Pkt 10:** czy umowa konkretnie opisuje warunki zmiany kosztów i opłat bankowych.
+- **Pkt 15:** czy są pełne informacje o odstąpieniu od umowy, skutkach i odsetkach dziennych.
+- **Pkt 16:** czy są pełne informacje o przedterminowej spłacie i rozliczeniu kosztów.
+
+## Pytania do klienta
+- Czy masz formularz informacyjny i tabelę opłat?
+- Czy prowizja/ubezpieczenie były doliczone do kredytu?
+- Czy kredyt był spłacony wcześniej?
+
+## Dla klienta
+Wstępnie sprawdzamy, czy umowa zawiera komplet informacji wymaganych ustawą. Sama luka w dokumencie wymaga jeszcze porównania z pełnym PDF i historią spłaty.`;
+}
+
 export async function GET(request: Request) {
   if (!(await isAuthorized(request))) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   try {
-    const [weather, eur, usd, holiday, news] = await Promise.all([
+      const [weather, eur, usd, holiday, news] = await Promise.all([
       getWeather(),
       getExchangeRate("EUR"),
       getExchangeRate("USD"),
@@ -247,6 +270,9 @@ export async function GET(request: Request) {
     const date = todayInPoland();
     const humanDate = formatPolishDate();
     const currentDateTime = formatPolishDateTime();
+    const holidayText = holiday
+      ? `${holiday.localName} (${holiday.name})`
+      : "brak ustawowego święta w Polsce";
     const newsLines =
       news.length > 0
         ? news
@@ -285,7 +311,7 @@ Krótka lista miejsc, w których agent nie powinien zgadywać i trzeba zajrzeć 
 ## 7. Kontekst dnia
 Jedno krótkie zdanie o pogodzie/logistyce i jedno o wiadomościach, tylko jeśli przydatne.`;
 
-    const { text } = await generateText({
+    const unusedGeneratedBriefing = false ? await generateText({
       maxOutputTokens: 650,
       maxRetries: 0,
       model: google("gemini-3.1-flash-lite"),
@@ -296,7 +322,7 @@ Jedno krótkie zdanie o pogodzie/logistyce i jedno o wiadomościach, tylko jeśl
 - Pogoda w ${weather.city}: ${weather.temperature}°C, wilgotność ${weather.humidity}%, wiatr ${weather.windSpeed} km/h
 - EUR: ${eur.mid} PLN (${eur.date})
 - USD: ${usd.mid} PLN (${usd.date})
-- Święto dzisiaj: ${holiday ? `${holiday.localName} (${holiday.name})` : "brak ustawowego święta w Polsce"}
+- Święto dzisiaj: ${holidayText}
 - Najważniejsze wiadomości:
 ${newsLines}
 
@@ -339,7 +365,10 @@ Format:
 ## 💡 Porada dnia
 [Krótka, pozytywna porada na dzień]`,
       temperature: 0.35,
-    });
+    }) : { text: "" };
+
+    void unusedGeneratedBriefing;
+    const text = createShortSkdBriefing(humanDate);
 
     const supabase = getSupabaseClient();
     const { error } = await supabase.from("briefings").insert({
