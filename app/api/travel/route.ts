@@ -1,8 +1,8 @@
 import { google } from "@ai-sdk/google";
 import {
   convertToModelMessages,
+  generateText,
   isStepCount,
-  streamText,
   type UIMessage,
 } from "ai";
 import { getModelErrorMessage } from "../../lib/errors";
@@ -148,12 +148,38 @@ function createLocalUIMessageResponse(text: string) {
   });
 }
 
+function createFallbackTravelPlan(taskText: string) {
+  const request = taskText.trim() || "plan podróży";
+
+  return `## Plan podróży
+
+Nie udało mi się teraz pobrać danych z modelu Google, ale nie zostawiam Cię z pustym ekranem.
+
+### Co wiem z Twojej prośby
+- Temat: ${request}
+
+### Co przygotować
+- Adres miejsca spotkania albo sądu/kancelarii.
+- Godzinę spotkania i margines minimum 30-45 minut.
+- Dokumenty SKD: umowa, harmonogram, historia spłaty, formularz informacyjny, tabela opłat/prowizji.
+- Telefon do klienta i potwierdzenie, czy dokumenty są kompletne.
+
+### Plan minimum
+1. Sprawdź dojazd w mapach i zapisz alternatywną trasę.
+2. Sprawdź pogodę przed wyjściem.
+3. Spakuj dokumenty w PDF i kopię roboczą do analizy.
+4. Po spotkaniu zapisz notatkę: bank, data umowy, kwota kredytu, prowizja/ubezpieczenie, RRSO i potencjalne punkty SKD.
+
+Spróbuj wysłać pytanie jeszcze raz za chwilę — jeśli Google odpowie, przygotuję pełny plan z pogodą, trasą i harmonogramem.`;
+}
+
 export async function POST(req: Request) {
   const { messages }: TravelRequestBody = await req.json();
-  const forcedFirstTool = getForcedFirstTool(getLastUserText(messages));
+  const lastUserText = getLastUserText(messages);
+  const forcedFirstTool = getForcedFirstTool(lastUserText);
 
   try {
-    const result = streamText({
+    const result = await generateText({
       maxOutputTokens: 5200,
       maxRetries: 0,
       messages: await convertToModelMessages(messages, {
@@ -183,10 +209,9 @@ export async function POST(req: Request) {
       tools: reactTools,
     });
 
-    return result.toUIMessageStreamResponse({
-      onError: (error) => getModelErrorMessage(error, "flash"),
-    });
+    return createLocalUIMessageResponse(result.text);
   } catch (error) {
-    return createLocalUIMessageResponse(getModelErrorMessage(error, "flash"));
+    console.error("Travel model error:", getModelErrorMessage(error, "flash"));
+    return createLocalUIMessageResponse(createFallbackTravelPlan(lastUserText));
   }
 }
