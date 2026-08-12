@@ -286,7 +286,7 @@ Krótka lista miejsc, w których agent nie powinien zgadywać i trzeba zajrzeć 
 Jedno krótkie zdanie o pogodzie/logistyce i jedno o wiadomościach, tylko jeśli przydatne.`;
 
     const { text } = await generateText({
-      maxOutputTokens: 2200,
+      maxOutputTokens: 650,
       maxRetries: 0,
       model: google("gemini-3.1-flash-lite"),
       prompt: `Dane wejściowe:
@@ -299,6 +299,11 @@ Jedno krótkie zdanie o pogodzie/logistyce i jedno o wiadomościach, tylko jeśl
 - Święto dzisiaj: ${holiday ? `${holiday.localName} (${holiday.name})` : "brak ustawowego święta w Polsce"}
 - Najważniejsze wiadomości:
 ${newsLines}
+
+NAJWAŻNIEJSZE: briefing ma być bardzo krótki, maksymalnie 750 znaków.
+Bez tabel. Bez długiej teorii. Bez pogody i walut, chyba że jedno zdanie na końcu.
+Format: nagłówek + 4 krótkie sekcje: Dziś, Kontrola SKD, Pytania, Dla klienta.
+W Kontrola SKD tylko pkt 7, pkt 10, pkt 15, pkt 16 — po jednym krótkim zdaniu.
 
 WYMAGANY FORMAT SKD:
 - Nie twórz zwykłego briefingu osobistego.

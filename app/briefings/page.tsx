@@ -24,7 +24,7 @@ function getPreview(content: string) {
     .replace(/[#>*_`-]/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 320);
+    .slice(0, 200);
 }
 
 export default function BriefingsPage() {
