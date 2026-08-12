@@ -2,17 +2,23 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LanguageModelUsage } from "ai";
 
 export const DAILY_TOKEN_LIMIT = 10_000;
+export const ADMIN_DAILY_TOKEN_LIMIT = 20_000;
+export const TOKEN_WARNING_THRESHOLD = 0.8;
 export const DAILY_TOKEN_LIMIT_MESSAGE =
   "Dzienny limit tokenów (10k) został wyczerpany. Wróć jutro!";
 
 type TokenBudgetStatus =
   | {
       allowed: true;
+      limit: number;
       usedTokens: number;
+      warning: boolean;
     }
   | {
       allowed: false;
+      limit: number;
       usedTokens: number;
+      warning: boolean;
     };
 
 type ApiUsageInsert = {
@@ -35,9 +41,40 @@ function normalizeTokenCount(value: number | undefined) {
     : 0;
 }
 
+export function isAdminEmail(email: string | null | undefined) {
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return false;
+  }
+
+  return new Set(
+    (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+  ).has(normalizedEmail);
+}
+
+export function getDailyTokenLimit(email?: string | null) {
+  return isAdminEmail(email) ? ADMIN_DAILY_TOKEN_LIMIT : DAILY_TOKEN_LIMIT;
+}
+
+export function getDailyTokenLimitMessage(limit: number) {
+  return `Dzienny limit tokenów (${Math.round(limit / 1000)}k) został wyczerpany. Wróć jutro!`;
+}
+
+export function getTokenLimitWarningMessage(usedTokens: number, limit: number) {
+  const remaining = Math.max(0, limit - usedTokens);
+  const percent = Math.round((usedTokens / limit) * 100);
+
+  return `⚠️ Uwaga: wykorzystano około ${percent}% dziennego limitu tokenów. Zostało około ${remaining.toLocaleString("pl-PL")} tokenów.`;
+}
+
 export async function checkDailyTokenBudget(
   supabase: SupabaseClient,
   userId: string,
+  email?: string | null,
 ): Promise<TokenBudgetStatus> {
   const { data, error } = await supabase
     .from("api_usage")
@@ -57,9 +94,12 @@ export async function checkDailyTokenBudget(
     return sum + tokensInput + tokensOutput;
   }, 0);
 
-  return usedTokens >= DAILY_TOKEN_LIMIT
-    ? { allowed: false, usedTokens }
-    : { allowed: true, usedTokens };
+  const limit = getDailyTokenLimit(email);
+  const warning = usedTokens >= limit * TOKEN_WARNING_THRESHOLD;
+
+  return usedTokens >= limit
+    ? { allowed: false, limit, usedTokens, warning }
+    : { allowed: true, limit, usedTokens, warning };
 }
 
 export async function logApiUsage(

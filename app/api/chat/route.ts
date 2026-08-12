@@ -14,7 +14,8 @@ import {
 } from "ai";
 import {
   checkDailyTokenBudget,
-  DAILY_TOKEN_LIMIT_MESSAGE,
+  getDailyTokenLimitMessage,
+  getTokenLimitWarningMessage,
   logApiUsage,
 } from "../../lib/apiUsage";
 import { getModelErrorMessage } from "../../lib/errors";
@@ -1291,10 +1292,17 @@ export async function POST(req: Request) {
     await saveDetectedUserName(userId, detectedUserName, profileSupabase);
   }
 
-  const tokenBudget = await checkDailyTokenBudget(profileSupabase, userId);
+  const tokenBudget = await checkDailyTokenBudget(
+    profileSupabase,
+    userId,
+    user.email,
+  );
   if (!tokenBudget.allowed) {
-    return createLocalUIMessageResponse(DAILY_TOKEN_LIMIT_MESSAGE);
+    return createLocalUIMessageResponse(getDailyTokenLimitMessage(tokenBudget.limit));
   }
+  const tokenLimitWarning = tokenBudget.warning
+    ? getTokenLimitWarningMessage(tokenBudget.usedTokens, tokenBudget.limit)
+    : "";
 
   const storedUserProfile = await getStoredUserProfile(userId, profileSupabase);
   const personalizationPrompt = createPersonalizationPrompt(storedUserProfile);
@@ -1375,7 +1383,9 @@ ${parsedImage ? skdVisionImageInstructions : ""}
 
 ${personalizationPrompt}
 
-${responseLength}`,
+${responseLength}
+
+${tokenLimitWarning ? `Na koncu odpowiedzi dodaj osobna linie: "${tokenLimitWarning}"` : ""}`,
         temperature: 0.25,
         timeout: {
           totalMs: 60000,
@@ -1435,7 +1445,9 @@ ${parsedImage ? skdVisionImageInstructions : ""}
 
 ${personalizationPrompt}
 
-${responseLength}`,
+${responseLength}
+
+${tokenLimitWarning ? `Na koncu odpowiedzi dodaj osobna linie: "${tokenLimitWarning}"` : ""}`,
       messages: await createModelMessages(
         recentMessages,
         parsedImage,
@@ -1464,6 +1476,10 @@ ${responseLength}`,
       generalToolsInstructions,
       responseFormatInstructions,
     ]);
+    const finalText =
+      tokenLimitWarning && filteredText !== OUTPUT_BLOCKED_MESSAGE
+        ? `${filteredText}\n\n${tokenLimitWarning}`
+        : filteredText;
 
     if (filteredText === OUTPUT_BLOCKED_MESSAGE) {
       await logMessage(profileSupabase, {
@@ -1474,7 +1490,7 @@ ${responseLength}`,
       });
     }
 
-    return createLocalUIMessageResponse(filteredText);
+    return createLocalUIMessageResponse(finalText);
   } catch (error) {
     return createLocalUIMessageResponse(
       getModelErrorMessage(error, selectedModel),

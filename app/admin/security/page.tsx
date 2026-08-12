@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { TopNavigation } from "../../components/TopNavigation";
-import { DAILY_TOKEN_LIMIT } from "../../lib/apiUsage";
+import { getDailyTokenLimit } from "../../lib/apiUsage";
 
 export const dynamic = "force-dynamic";
 
@@ -108,13 +108,18 @@ function groupUsage(
   }
 
   return Array.from(usageByUser.entries())
-    .map(([userId, totals]) => ({
-      email: getEmail(userEmails, userId),
-      percentLimit: Math.min(100, (totals.today / DAILY_TOKEN_LIMIT) * 100),
-      tokensToday: totals.today,
-      tokensWeek: totals.week,
-      userId,
-    }))
+    .map(([userId, totals]) => {
+      const email = getEmail(userEmails, userId);
+      const limit = getDailyTokenLimit(email);
+
+      return {
+        email,
+        percentLimit: Math.min(100, (totals.today / limit) * 100),
+        tokensToday: totals.today,
+        tokensWeek: totals.week,
+        userId,
+      };
+    })
     .sort((a, b) => b.tokensWeek - a.tokensWeek)
     .slice(0, 5);
 }
