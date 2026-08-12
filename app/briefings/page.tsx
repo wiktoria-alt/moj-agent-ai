@@ -24,7 +24,7 @@ function getPreview(content: string) {
     .replace(/[#>*_`-]/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 150);
+    .slice(0, 320);
 }
 
 export default function BriefingsPage() {
@@ -137,7 +137,7 @@ export default function BriefingsPage() {
             <p className="eyebrow">Automatyczny agent</p>
             <h1>📰 Briefingi</h1>
             <p className="agent-description">
-              Automatyczne podsumowania dnia od Twojego agenta.
+              Poranny briefing SKD: sprawy, dokumenty, ryzyka i zadania na dziś.
             </p>
           </div>
           <button disabled={isGenerating} onClick={() => void generateNow()} type="button">
@@ -185,6 +185,7 @@ export default function BriefingsPage() {
                 >
                   <span className="briefing-date">{formatBriefingDate(briefing.date)}</span>
                   <strong>{getPreview(briefing.content)}</strong>
+                  <em>Otwórz cały briefing</em>
                   <span className="briefing-status">✅ wygenerowany automatycznie</span>
                 </button>
               ))

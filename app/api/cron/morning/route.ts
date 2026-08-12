@@ -254,6 +254,37 @@ export async function GET(request: Request) {
             .join("\n")
         : "Nie udało się pobrać aktualnych nagłówków wiadomości.";
 
+    const skdSystemPrompt = `Jesteś asystentem kancelaryjno-operacyjnym dla pracy z SKD, czyli sankcją kredytu darmowego.
+Napisz poranny briefing po polsku. Ma być praktyczny, konkretny i pod sprawy klientów bez danych osobowych.
+
+Użyj dokładnie tej daty w nagłówku: ${humanDate}. Nie przesuwaj daty na jutro.
+
+Format odpowiedzi:
+
+# Briefing SKD na ${humanDate}
+
+## 1. Priorytety na dziś
+Wypisz 3-5 zadań operacyjnych przy sprawach SKD.
+
+## 2. Checklist dokumentów do spraw SKD
+Tabela: Dokument | Po co jest potrzebny | Co sprawdzić.
+
+## 3. Punkty SKD do kontroli w umowach
+Tabela: Punkt ustawy | Co sprawdzić w umowie | Sygnał ryzyka | Co zapytać klienta.
+Uwzględnij tylko: art. 30 ust. 1 pkt 7, pkt 10, pkt 15, pkt 16 ustawy o kredycie konsumenckim.
+
+## 4. Alerty i ręczna weryfikacja
+Krótka lista miejsc, w których agent nie powinien zgadywać i trzeba zajrzeć do PDF.
+
+## 5. Pytania do klienta
+5 krótkich pytań pomagających uzupełnić sprawę.
+
+## 6. Mini-podsumowanie dla klienta
+3-4 zdania prostym językiem, bez obietnicy wygranej.
+
+## 7. Kontekst dnia
+Jedno krótkie zdanie o pogodzie/logistyce i jedno o wiadomościach, tylko jeśli przydatne.`;
+
     const { text } = await generateText({
       maxOutputTokens: 2200,
       maxRetries: 0,
@@ -267,8 +298,18 @@ export async function GET(request: Request) {
 - USD: ${usd.mid} PLN (${usd.date})
 - Święto dzisiaj: ${holiday ? `${holiday.localName} (${holiday.name})` : "brak ustawowego święta w Polsce"}
 - Najważniejsze wiadomości:
-${newsLines}`,
-      system: `Jesteś osobistym asystentem. Napisz poranny briefing po polsku.
+${newsLines}
+
+WYMAGANY FORMAT SKD:
+- Nie twórz zwykłego briefingu osobistego.
+- Napisz briefing dla pracy z sankcją kredytu darmowego.
+- Uwzględnij: dokumenty klienta, checklistę umowy, art. 30 ust. 1 pkt 7, 10, 15 i 16, pytania do klienta, zadania na dziś i krótkie podsumowanie dla klienta.
+- Pogoda, waluty i ogólne wiadomości mogą być tylko krótkim kontekstem na końcu.
+- Nie używaj danych osobowych.`,
+      system: skdSystemPrompt + `
+
+Stary format poniżej traktuj tylko jako informację pomocniczą, jeśli model go widzi.
+Jesteś osobistym asystentem. Napisz poranny briefing po polsku.
 
 Użyj dokładnie tej daty w nagłówku: ${humanDate}. Nie przesuwaj daty na jutro.
 

@@ -6424,7 +6424,7 @@ h2 {
 .briefings-panel {
   width: min(100%, 1180px);
   align-self: center;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(226, 232, 240, 0.94);
   border-radius: 12px;
   background: #ffffff;
@@ -6510,6 +6510,17 @@ h2 {
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
 }
 
+.briefing-card em {
+  width: fit-content;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .briefing-card:not(:disabled):hover {
   border-color: rgba(2, 132, 199, 0.36);
   background: #f0f9ff;
@@ -6551,7 +6562,21 @@ h2 {
   min-height: 520px;
   background: #ffffff;
   color: var(--text);
+  overflow: visible;
   padding: 24px;
+}
+
+.briefing-detail.markdown-message {
+  max-height: none;
+}
+
+.briefing-detail :is(h1, h2, h3) {
+  overflow-wrap: anywhere;
+}
+
+.briefing-detail p,
+.briefing-detail li {
+  line-height: 1.65;
 }
 
 .briefing-detail-actions {
@@ -6566,6 +6591,7 @@ h2 {
 .briefing-detail table {
   width: 100%;
   border-collapse: collapse;
+  display: table;
   margin: 12px 0;
   overflow-wrap: anywhere;
 }
