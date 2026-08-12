@@ -296,6 +296,23 @@ const imageInstructions = `## OBRAZY
 - Gdy obraz jest dołączony, analizuj zawartość obrazu, rozpoznawaj tekst i odpowiadaj na pytanie o obraz.
 - Jeśli pytanie dotyczy kolorów, opisz dominujące kolory i podaj przybliżone kody HEX.`;
 
+const skdVisionImageInstructions = `## SCREEN UMOWY KREDYTOWEJ / VISION SKD
+Jesli obraz wyglada jak fragment umowy kredytu albo pozyczki:
+1. Najpierw odczytaj widoczne dane liczbowe i tekstowe z obrazu.
+2. Wypisz tylko to, co naprawde widac na screenie. Nie zgaduj brakujacych paragrafow.
+3. Dla SKD oceniaj tylko widoczny fragment:
+   - pkt 7: RRSO, calkowita kwota do zaplaty, prowizja/ubezpieczenie kredytowane w kwocie brutto.
+   - pkt 10: warunki zmiany kosztow i oplat bankowych.
+   - pkt 15: odstapienie od umowy.
+   - pkt 16: przedterminowa splata i rozliczenie kosztow.
+4. Jesli na screenie nie widac informacji dla pkt 10/15/16, napisz: "nie da sie ocenic z tego screena".
+5. Format odpowiedzi:
+   - Odczytane dane
+   - Wstepna ocena SKD z widocznego fragmentu
+   - Czego brakuje do pelnej analizy
+   - Pytania do klienta
+Nie przesadzaj, ze SKD przysluguje.`;
+
 function getGoogleApiKey() {
   return process.env.GOOGLE_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 }
@@ -1354,6 +1371,8 @@ ${responseFormatInstructions}
 
 ${parsedImage ? imageInstructions : ""}
 
+${parsedImage ? skdVisionImageInstructions : ""}
+
 ${personalizationPrompt}
 
 ${responseLength}`,
@@ -1411,6 +1430,8 @@ ${generalToolsInstructions}
 ${responseFormatInstructions}
 
 ${parsedImage ? imageInstructions : ""}
+
+${parsedImage ? skdVisionImageInstructions : ""}
 
 ${personalizationPrompt}
 
